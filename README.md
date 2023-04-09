@@ -1,3 +1,3 @@
 # snpe-reputation-systems
 
-snpe_reputation_systems
+snpe-reputation-systems
