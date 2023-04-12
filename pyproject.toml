@@ -5,22 +5,24 @@ line-length = 79
 name = "reputation-systems"
 version = "0.0.1"
 description = "Dynamic Structural Modeling and Approximate Bayesian Inference of Online Reputation System"
-packages = [{include = "reputation-systems"}]
+authors = ["Shrabastee Banerjee", "Narendra Mukherjee", "M. Amin Rahimian"]
 
 [tool.poetry.dependencies]
-python = "^3.7.0"
-sbi = "^0.20.0
+python = "3.9.16"
+sbi = "^0.20.0"
 hyperopt = "^0.2.7"
 mlflow = "^2.0.1"
 tqdm = "^4.64.0"
 arviz = "^0.13.0"
 black = "^22.8.0"
-nb_black = "^1.0.7"
 pyreadr = "^0.4.6"
 mypy = "^1.0.0"
-pytroch = "^1.12.1"
-torchvision = "^0.13.0"	
-torchaudio = "^0.12.0"
+torch = { url = "https://download.pytorch.org/whl/cu116/torch-1.12.0%2Bcu116-cp39-cp39-linux_x86_64.whl"}
+torchvision = { url = "https://download.pytorch.org/whl/cu116/torchvision-0.13.0%2Bcu116-cp39-cp39-linux_x86_64.whl" }
+torchaudio =  { url = "https://download.pytorch.org/whl/cu116/torchaudio-0.12.0%2Bcu116-cp39-cp39-linux_x86_64.whl" }
+
+[tool.poetry.dev-dependencies]
+pytest = "^7.1.2"
 
 [build-system] 
 requires = ["poetry-core"]
