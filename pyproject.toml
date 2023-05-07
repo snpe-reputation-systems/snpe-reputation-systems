@@ -1,6 +1,3 @@
-[tool.black] 
-line-length = 79
-
 [tool.poetry]
 name = "reputation-systems"
 version = "0.0.1"
