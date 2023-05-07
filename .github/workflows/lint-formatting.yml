@@ -38,8 +38,8 @@ jobs:
     - name: run_black
       run: black .
 
-    - name: run_isort
-      run: isort .
+    #- name: run_isort
+    #  run: isort .
 
     - name: Commit changes
       uses: stefanzweifel/git-auto-commit-action@v4
