@@ -4,7 +4,7 @@ on: push
 
 jobs: 
   lint-plus-format:
-    name: Lint_plus_conditional_format
+    name: lint_and_format
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
