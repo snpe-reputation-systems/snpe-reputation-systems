@@ -6,8 +6,7 @@ from typing import Deque, List, Optional, Union
 
 import numpy as np
 from joblib import Parallel, delayed
-from snpe.utils.functions import (check_existing_reviews,
-                                  check_simulation_parameters)
+from snpe.utils.functions import check_existing_reviews, check_simulation_parameters
 from snpe.utils.tqdm_utils import tqdm_joblib
 from tqdm import tqdm
 
