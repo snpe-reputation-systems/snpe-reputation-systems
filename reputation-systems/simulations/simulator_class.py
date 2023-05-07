@@ -61,9 +61,7 @@ class BaseSimulator:
     def rating_calculator(self, delta: float, simulation_id: int) -> int:
         raise NotImplementedError
 
-    def decision_to_leave_review(
-        self, delta: float, simulation_id: int
-    ) -> bool:
+    def decision_to_leave_review(self, delta: float, simulation_id: int) -> bool:
         raise NotImplementedError
 
     def simulate(
@@ -113,9 +111,7 @@ class BaseSimulator:
             {dummy_parameters.keys()} as simulation parameters instead
             """
         else:
-            simulation_parameters = self.generate_simulation_parameters(
-                num_simulations
-            )
+            simulation_parameters = self.generate_simulation_parameters(num_simulations)
         # Run shape checks on the input dict of simulation parameters
         # Store the number of distribution samples per parameter if the checks succeed
         self.params["num_dist_samples"] = check_simulation_parameters(
@@ -198,10 +194,7 @@ class SingleRhoSimulator(BaseSimulator):
         # involved process of getting the actual experience (through product embeddings) can be used
         # For the general single rho simulator, actual experience is just a draw from the expected
         # distribution of experiences
-        return (
-            np.where(np.random.multinomial(1, expected_experience_dist))[0][0]
-            + 1.0
-        )
+        return np.where(np.random.multinomial(1, expected_experience_dist))[0][0] + 1.0
 
     def simulate_visitor_journey(
         self, simulated_reviews: Deque, simulation_id: int, **kwargs
@@ -216,13 +209,9 @@ class SingleRhoSimulator(BaseSimulator):
         # Thus the expected experience is built out of the current distribution of reviews the user can see
         expected_experience_dist = np.random.dirichlet(review_posterior)
         # Also get the mean "experience" that the user expects
-        expected_experience = np.sum(
-            expected_experience_dist * np.arange(1, 6)
-        )
+        expected_experience = np.sum(expected_experience_dist * np.arange(1, 6))
         # Get the user's actual experience
-        experience = self.get_actual_experience(
-            expected_experience_dist, **kwargs
-        )
+        experience = self.get_actual_experience(expected_experience_dist, **kwargs)
 
         # User's mismatch is the difference between their actual experience and the mean of the distribution
         # of experiences they expected
@@ -267,9 +256,7 @@ class SingleRhoSimulator(BaseSimulator):
         else:
             return 4
 
-    def decision_to_leave_review(
-        self, delta: float, simulation_id: int
-    ) -> bool:
+    def decision_to_leave_review(self, delta: float, simulation_id: int) -> bool:
         # Right now, we don't make the very first user always leave a review - maybe change later
         # Pull out the single rho which will be used in the decision to rate
         rho = self.yield_simulation_param_per_visitor(simulation_id, "rho")
@@ -291,9 +278,7 @@ class SingleRhoSimulator(BaseSimulator):
         if num_reviews_per_simulation is None:
             num_simulated_reviews = np.random.randint(low=20, high=5001)
         else:
-            num_simulated_reviews = int(
-                num_reviews_per_simulation[simulation_id]
-            )
+            num_simulated_reviews = int(num_reviews_per_simulation[simulation_id])
 
         total_visitors = num_simulated_reviews * 30
         # Give the product 5 reviews to start with, one for each rating. This is only so that the review timeseries
@@ -312,8 +297,7 @@ class SingleRhoSimulator(BaseSimulator):
                 simulated_reviews.append(current_histogram)
                 if len(simulated_reviews) > 1:
                     assert (
-                        np.sum(simulated_reviews[-1])
-                        - np.sum(simulated_reviews[-2])
+                        np.sum(simulated_reviews[-1]) - np.sum(simulated_reviews[-2])
                     ) == 1, """
                     Please check the histograms provided in the array of existing reviews. These should be in the form
                     of cumulative histograms and should only add 1 rating at a time
@@ -364,9 +348,7 @@ class DoubleRhoSimulator(SingleRhoSimulator):
         simulation_parameters = {"rho": rho_array}
         return simulation_parameters
 
-    def decision_to_leave_review(
-        self, delta: float, simulation_id: int
-    ) -> bool:
+    def decision_to_leave_review(self, delta: float, simulation_id: int) -> bool:
         # Right now, we don't make the very first user always leave a review - maybe change later
         # Pull out the single rho which will be used in the decision to rate
         rho = self.yield_simulation_param_per_visitor(simulation_id, "rho")
@@ -408,8 +390,7 @@ class HerdingSimulator(DoubleRhoSimulator):
                 "num_latest_reviews_for_herding"
             ]
             assert (
-                self.num_latest_reviews_for_herding
-                < self.min_reviews_for_herding
+                self.num_latest_reviews_for_herding < self.min_reviews_for_herding
             ), f"""
             Minimum {self.min_reviews_for_herding} required before herding can be done, but
             {self.num_latest_reviews_for_herding} latest reviews to be actually used for mode calculation during herding,
@@ -424,8 +405,8 @@ class HerdingSimulator(DoubleRhoSimulator):
     def generate_simulation_parameters(cls, num_simulations: int) -> dict:
         # This method gets the rho parameters by calling the parameter generating classmethod of the DoubleRhoSimulator
         # Then it just adds the herding parameter on top
-        simulation_parameters = (
-            DoubleRhoSimulator.generate_simulation_parameters(num_simulations)
+        simulation_parameters = DoubleRhoSimulator.generate_simulation_parameters(
+            num_simulations
         )
         simulation_parameters["h_p"] = np.tile(
             np.random.random(size=num_simulations)[None, :],
@@ -517,17 +498,13 @@ class HerdingSimulator(DoubleRhoSimulator):
                 )
             elif self.previous_rating_measure == "mode":
                 # WARNING: If the histogram has more than 1 mode, argmax will ONLY RETURN THE FIRST ONE
-                previous_rating_index = np.argmax(
-                    np.array(simulated_reviews[-1])
-                )
+                previous_rating_index = np.argmax(np.array(simulated_reviews[-1]))
             elif self.previous_rating_measure == "mode of latest":
                 # Get the histogram of latest num_latest_reviews_for_herding, and pick the mode
                 # WARNING: If the histogram has more than 1 mode, argmax will ONLY RETURN THE FIRST ONE
                 latest_histogram = (
                     simulated_reviews[-1]
-                    - simulated_reviews[
-                        -self.num_latest_reviews_for_herding - 1
-                    ]
+                    - simulated_reviews[-self.num_latest_reviews_for_herding - 1]
                 )
                 previous_rating_index = np.argmax(latest_histogram)
             else:
@@ -551,9 +528,7 @@ class DoubleHerdingSimulator(HerdingSimulator):
     # Simulates herding with 2 product-specific herding parameters (h_p): one is used when the visitor's intended rating
     # is above a metric of existing ratings (mean or mode) and the other when it is below
     def __init__(self, params: dict):
-        self.herding_differentiating_measure = params[
-            "herding_differentiating_measure"
-        ]
+        self.herding_differentiating_measure = params["herding_differentiating_measure"]
         assert self.herding_differentiating_measure in [
             "mean",
             "mode",
@@ -566,8 +541,8 @@ class DoubleHerdingSimulator(HerdingSimulator):
     @classmethod
     def generate_simulation_parameters(cls, num_simulations) -> dict:
         # Same strategy as in the HerdingSimulator
-        simulation_parameters = (
-            DoubleRhoSimulator.generate_simulation_parameters(num_simulations)
+        simulation_parameters = DoubleRhoSimulator.generate_simulation_parameters(
+            num_simulations
         )
         h_p_array = np.vstack(
             (
@@ -632,15 +607,13 @@ class RatingScaleSimulator(HerdingSimulator):
         self.one_star_lowest_limit = params["one_star_lowest_limit"]
         # Limit of 5 star ratings should be positive, and vice-versa for 1 star ratings
         assert (
-            self.five_star_highest_limit > 0.0
-            and self.five_star_highest_limit < 4.0
+            self.five_star_highest_limit > 0.0 and self.five_star_highest_limit < 4.0
         ), f"""
         The highest limit of delta for 5 star ratings should be positive and less than 4,
         found {self.five_star_highest_limit}
         """
         assert (
-            self.one_star_lowest_limit < 0.0
-            and self.one_star_lowest_limit > -4.0
+            self.one_star_lowest_limit < 0.0 and self.one_star_lowest_limit > -4.0
         ), f"""
         The lowest limit of delta for 1 star ratings should be negative and more than -4,
         found {self.one_star_lowest_limit}
@@ -662,8 +635,8 @@ class RatingScaleSimulator(HerdingSimulator):
         # Then we will add the p values that define the rating scales on top
         # These p values determine how we will split up the space from one_star_lowest_limit to five_star_lowest_limit
         # over the scale on which delta values are compared and star ratings are determined
-        simulation_parameters = (
-            HerdingSimulator.generate_simulation_parameters(num_simulations)
+        simulation_parameters = HerdingSimulator.generate_simulation_parameters(
+            num_simulations
         )
         # p_5 determines the actual limit to which delta is compared to get 5 star ratings
         # That limit = five_star_highest_limit * p_5
@@ -736,9 +709,7 @@ class RatingScaleSimulator(HerdingSimulator):
         **kwargs,
     ) -> Union[int, None]:
         # Run the visitor journey the same way at first
-        rating_index = super(
-            RatingScaleSimulator, self
-        ).simulate_visitor_journey(
+        rating_index = super(RatingScaleSimulator, self).simulate_visitor_journey(
             simulated_reviews, simulation_id, use_h_u, **kwargs
         )
 
