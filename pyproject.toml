@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "reputation_systems"
+name = "snpe_reputation_systems"
 version = "0.0.1"
 description = "Dynamic Structural Modeling and Approximate Bayesian Inference of Online Reputation System"
 authors = ["Shrabastee Banerjee", "Narendra Mukherjee", "M. Amin Rahimian"]
