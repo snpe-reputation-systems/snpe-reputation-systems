@@ -1,2 +1,2 @@
-def sum_a(x, y):
+def sum_a_func(x, y):
     return x + y
