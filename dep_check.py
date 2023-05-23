@@ -1,4 +1,5 @@
+import numpy
 import sbi
 import torch
-import numpy
-print ("Dependencies Available!")
+
+print("Dependencies Available!")
