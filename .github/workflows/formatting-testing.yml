@@ -1,0 +1,32 @@
+name: Python package
+
+on:
+  push:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+
+    runs-on: self-hosted
+    strategy:
+      fail-fast: false
+
+    steps:
+
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: super_linter
+      continue-on-error: true
+      uses: super-linter/super-linter@v5.0.0
+      env:
+        DEFAULT_BRANCH: main
+        GITHUB_TOKEN: ${{ secrets.FORMAT_TOKEN }}
+        VALIDATE_PYTHON_MYPY: true
+        VALIDATE_PYTHON_BLACK: true
+        VALIDATE_PYTHON_ISORT: true
+
+    - name: Run tests
+      run: pytest

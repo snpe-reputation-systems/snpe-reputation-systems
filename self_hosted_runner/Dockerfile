@@ -18,7 +18,7 @@ RUN  ./config.sh --url <REPO_URL> --token <TOKEN> --work --unattended --replace 
 USER root
 
 RUN conda install pytorch torchvision torchaudio -c pytorch && \
-    pip install sbi hyperopt mlflow tqdm arviz pytest hypothesis
+    pip install sbi hyperopt mlflow tqdm arviz pytest hypothesis black isort
 
 COPY entrypoint.sh /actions-runner
 
