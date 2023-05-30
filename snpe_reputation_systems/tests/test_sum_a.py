@@ -1,4 +1,4 @@
-from ..simulations.sum_a import sum_a_func
+from ..snpe_reputation_systems.simulations.sum_a import sum_a_func
 
 def test_sum_a():
     assert sum_a_func(2, 3) == 5
