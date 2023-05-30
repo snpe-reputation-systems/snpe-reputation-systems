@@ -1,9 +1,4 @@
-import sys
-import os
-
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-from sum_a import sum_a_func
+from ..simulations.sum_a import sum_a_func
 
 def test_sum_a():
     assert sum_a_func(2, 3) == 5
