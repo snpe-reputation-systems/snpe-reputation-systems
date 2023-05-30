@@ -1,3 +1,3 @@
 #import pytest
-from ..snpe_reputation_systems.simulations.sum_a import BaseSimulator
+from ..snpe_reputation_systems.simulations.simulator_class import BaseSimulator
 print("hey")
