@@ -9,7 +9,7 @@ on:
 jobs:
   format-check:
 
-    runs-on: [self-hosted, format-runner]
+    runs-on: [self-hosted, sh-format]
     strategy:
       fail-fast: true
 
@@ -30,7 +30,7 @@ jobs:
 
   code-testing:
 
-    runs-on: [self-hosted, test-runner]
+    runs-on: [self-hosted, sh-test]
     strategy:
       fail-fast: true
 
