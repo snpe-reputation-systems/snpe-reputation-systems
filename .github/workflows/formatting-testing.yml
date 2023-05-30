@@ -7,11 +7,11 @@ on:
       - main
 
 jobs:
-  build:
+  format-check:
 
-    runs-on: self-hosted
+    runs-on: format-runner
     strategy:
-      fail-fast: false
+      fail-fast: true
 
     steps:
 
@@ -27,6 +27,17 @@ jobs:
         VALIDATE_PYTHON_MYPY: true
         VALIDATE_PYTHON_BLACK: true
         VALIDATE_PYTHON_ISORT: true
+
+  code-testing:
+
+    runs-on: test-runner
+    strategy:
+      fail-fast: true
+
+    steps:
+
+    - name: Checkout
+      uses: actions/checkout@v3
 
     - name: Run tests
       run: pytest
