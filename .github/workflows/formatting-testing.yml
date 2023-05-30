@@ -1,4 +1,4 @@
-name: Python package
+name: formatting-testing
 
 on:
   push:
@@ -9,7 +9,7 @@ on:
 jobs:
   format-check:
 
-    runs-on: format-runner
+    runs-on: [self-hosted, format-runner]
     strategy:
       fail-fast: true
 
@@ -30,7 +30,7 @@ jobs:
 
   code-testing:
 
-    runs-on: test-runner
+    runs-on: [self-hosted, test-runner]
     strategy:
       fail-fast: true
 
