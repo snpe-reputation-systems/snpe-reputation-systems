@@ -13,9 +13,9 @@ def test_base_simulator():
     }
     return BaseSimulator(params)
     
-def test_base_simulator_init(test_base_simulator):
-    assert test_base_simulator(np.ones(5)) == np.array([2, 2, 2, 2, 2])
-    assert test_base_simulator(np.ones(6)) == pytest.raises(AssertionError)
+def test_convolve_prior_with_existing_reviews(test_base_simulator):
+    assert test_base_simulator.convolve_prior_with_existing_reviews(np.ones(5)) == np.array([2, 2, 2, 2, 2])
+    assert test_base_simulator.convolve_prior_with_existing_reviews(np.ones(6)) == pytest.raises(AssertionError)
      
 # Function does not seem robust to inclussion of np.nan in the input array
 # Function does not seem robust to inclussion of negative values in the input array
