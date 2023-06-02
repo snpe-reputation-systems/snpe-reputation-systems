@@ -9,7 +9,7 @@ on:
 jobs:
   format-check:
 
-    runs-on: [self-hosted, sh-format]
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: true
 
