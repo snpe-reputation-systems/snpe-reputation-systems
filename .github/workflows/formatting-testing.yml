@@ -26,7 +26,6 @@ jobs:
       uses: super-linter/super-linter@v5.0.0
       env:
         DEFAULT_BRANCH: main
-        GITHUB_TOKEN: ${{ secrets.FORMAT_TOKEN }}
         VALIDATE_PYTHON_MYPY: true
         VALIDATE_PYTHON_BLACK: true
         VALIDATE_PYTHON_ISORT: true
