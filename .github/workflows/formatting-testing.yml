@@ -29,6 +29,7 @@ jobs:
 
   code-testing:
 
+    needs: format-check
     runs-on: [self-hosted, sh-test]
     strategy:
       fail-fast: true
