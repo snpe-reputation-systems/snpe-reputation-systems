@@ -20,3 +20,4 @@ def test_convolve_prior_with_existing_reviews(test_base_simulator):
 # Function does not seem robust to inclussion of np.nan in the input array
 # Function does not seem robust to inclussion of negative values in the input array
 # Function does not seem robust to inclussion of float values in the input array
+# Add xfail statements
