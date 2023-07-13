@@ -30,7 +30,7 @@ jobs:
   code-testing:
 
     needs: format-check
-    runs-on: [self-hosted, sh-test]
+    runs-on: [self-hosted, testing-runner-1]
     strategy:
       fail-fast: true
 
