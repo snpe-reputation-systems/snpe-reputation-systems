@@ -20,15 +20,11 @@ USER root
 RUN conda install pytorch torchvision torchaudio -c pytorch && \
     pip install sbi hyperopt mlflow tqdm arviz pytest hypothesis black isort
 
-COPY entrypoint.sh /actions-runner
-
-RUN chown runneruser:runneruser /actions-runner/entrypoint.sh
-
 USER runneruser
 
-RUN chmod +x /actions-runner/entrypoint.sh
+RUN chmod +x /actions-runner/run.sh
 
-ENTRYPOINT ["/actions-runner/entrypoint.sh"]
+ENTRYPOINT ["/actions-runner/run.sh"]
 
 
 
