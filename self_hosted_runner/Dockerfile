@@ -13,7 +13,7 @@ RUN curl -O -L https://github.com/actions/runner/releases/download/v2.304.0/acti
 
 USER runneruser
 
-RUN  ./config.sh --url <REPO_URL> --token <TOKEN> --work --unattended --replace --name <RUNNER_NAME>
+RUN  ./config.sh --url <REPO_URL> --token <TOKEN> --work --unattended --replace --name <RUNNER_NAME> --labels <LABELS_HERE>
 
 USER root
 
