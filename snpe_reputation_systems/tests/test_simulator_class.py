@@ -76,7 +76,7 @@ def yield_SingleRhoSimulator():
 @settings(max_examples=50)
 @given(delta=st.floats(min_value=-2, max_value=2), simulation_id=st.integers(min_value=0))
 
-def test_rating_calculator(yield_SingleRhoSimulator, delta, simulation_id):
+def test_rating_calculator(delta, simulation_id):
 
     simulator = yield_SingleRhoSimulator()
     result = simulator.rating_calculator(delta, simulation_id)
