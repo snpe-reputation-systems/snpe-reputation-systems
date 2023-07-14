@@ -56,7 +56,7 @@ def test_load_simulations():
 #############################################
 
 @pytest.fixture
-def yield_SingleRhoSimulator(self):
+def yield_SingleRhoSimulator():
 
     params = {
         "review_prior": np.array([1, 1, 1, 1, 1]),
