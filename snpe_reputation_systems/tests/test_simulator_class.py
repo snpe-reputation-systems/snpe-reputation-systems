@@ -28,7 +28,7 @@ def test_convolve_prior_with_existing_reviews(test_base_simulator):
     assert isinstance(result, np.ndarray)
 
     #Null input test
-    with pytest.raises(TypeError):
+    with pytest.raises(AssertionError): 
         test_base_simulator.convolve_prior_with_existing_reviews(None)
 
     
