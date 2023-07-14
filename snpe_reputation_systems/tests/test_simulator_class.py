@@ -65,17 +65,19 @@ def yield_SingleRhoSimulator():
 
 @settings(max_examples=20)
 @given(experience=st.integers(min_value=1, max_value=5), expected_experience=st.integers(min_value=1, max_value=5)) 
-def test_mismatch_calculator(expected_experience, experience):
+def test_mismatch_calculator(experience, expected_experience):
+
+    simulator = yield_SingleRhoSimulator()
 
     # Test of correct substraction
-    assert SingleRhoSimulator.mismatch_calculator(experience, expected_experience) == (experience - expected_experience)
+    assert simulator.mismatch_calculator(experience, expected_experience) == (experience - expected_experience)
 
     # Output type test
-    assert isinstance(SingleRhoSimulator.mismatch_calculator(experience, expected_experience), int)
+    assert isinstance(simulator.mismatch_calculator(experience, expected_experience), int)
 
     # Null input test
     with pytest.raises(AssertionError): 
-        SingleRhoSimulator.mismatch_calculator(None)
+        simulator.mismatch_calculator(None, None)
 
 @settings(max_examples=20)
 @given(delta=st.floats(min_value=-4, max_value=4), simulation_id=st.integers(min_value=0))
