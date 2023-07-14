@@ -5,6 +5,8 @@ import pandas as pd
 from ..snpe_reputation_systems.simulations.simulator_class import BaseSimulator
 
 
+# Tests for BaseSimulator class methods
+
 @pytest.fixture
 def test_base_simulator():
     params = {
@@ -14,7 +16,7 @@ def test_base_simulator():
     }
     return BaseSimulator(params)
     
-def test_convolve_prior_with_existing_reviews(test_base_simulator):
+def test_convolve_prior_with_existing_reviews():
     
     # Test of correct sum
     assert np.array_equal(test_base_simulator.convolve_prior_with_existing_reviews(np.ones(5)), np.array([2, 2, 2, 2, 2]))
@@ -30,5 +32,17 @@ def test_convolve_prior_with_existing_reviews(test_base_simulator):
     #Null input test
     with pytest.raises(AttributeError): 
         test_base_simulator.convolve_prior_with_existing_reviews(None)
+
+def test_simulate():
+    pass
+
+def test_yield_simulation_param_per_visitor():
+    pass
+
+def test_save_simulations():
+    pass
+
+def test_load_simulations():
+    pass
 
     
