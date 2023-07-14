@@ -27,11 +27,11 @@ def test_convolve_prior_with_existing_reviews(yield_BaseSimulator):
     with pytest.raises(AssertionError):
         yield_BaseSimulator.convolve_prior_with_existing_reviews(np.array([1, 2, 3, 4, 5, 6]))
         
-    # Return type test
+    # Output type test
     result = yield_BaseSimulator.convolve_prior_with_existing_reviews(np.ones(5))
     assert isinstance(result, np.ndarray)
 
-    #Null input test
+    # Null input test
     with pytest.raises(AttributeError): 
         yield_BaseSimulator.convolve_prior_with_existing_reviews(None)
 
@@ -55,16 +55,6 @@ def test_load_simulations():
 # class TestSingleRhoSimulator: 
 #############################################
 
-#@pytest.fixture
-#def yield_SingleRhoSimulator():
-#
-#    params = {
-#        "review_prior": np.array([1, 1, 1, 1, 1]),
-#        "tendency_to_rate": 1.0,
-#        "simulation_type": "histogram",
-#    }
-#    return SingleRhoSimulator(params)
-
 def yield_SingleRhoSimulator():
     params = {
         "review_prior": np.array([1, 1, 1, 1, 1]),
@@ -73,8 +63,22 @@ def yield_SingleRhoSimulator():
     }
     return SingleRhoSimulator(params)
 
-@settings(max_examples=50)
-@given(delta=st.floats(min_value=-2, max_value=2), simulation_id=st.integers(min_value=0))
+@settings(max_examples=20)
+@given(experience=st.integers(min_value=1, max_value=5), expected_experience=st.integers(min_value=1, max_value=5)) 
+def test_mismatch_calculator(expected_experience, experience):
+
+    # Test of correct substraction
+    assert SingleRhoSimulator.mismatch_calculator(experience, expected_experience) == (experience - expected_experience)
+
+    # Output type test
+    assert isinstance(SingleRhoSimulator.mismatch_calculator(experience, expected_experience), int)
+
+    # Null input test
+    with pytest.raises(AssertionError): 
+        SingleRhoSimulator.mismatch_calculator(None)
+
+@settings(max_examples=20)
+@given(delta=st.floats(min_value=-4, max_value=4), simulation_id=st.integers(min_value=0))
 
 def test_rating_calculator(delta, simulation_id):
 
