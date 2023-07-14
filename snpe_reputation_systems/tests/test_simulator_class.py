@@ -24,7 +24,7 @@ def test_convolve_prior_with_existing_reviews(test_base_simulator):
         test_base_simulator.convolve_prior_with_existing_reviews(np.array([1, 2, 3, 4, 5, 6]))
         
     # Return type test
-    result = test_base_simulator.convolve_prior_with_existing_reviews(np.ones(5)), np.array([2, 2, 2, 2, 2])
+    result = test_base_simulator.convolve_prior_with_existing_reviews(np.ones(5))
     assert isinstance(result, np.ndarray)
 
     #Null input test
