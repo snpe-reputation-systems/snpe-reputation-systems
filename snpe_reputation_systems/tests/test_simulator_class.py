@@ -16,7 +16,7 @@ def test_base_simulator():
     }
     return BaseSimulator(params)
     
-def test_convolve_prior_with_existing_reviews():
+def test_convolve_prior_with_existing_reviews(test_base_simulator):
     
     # Test of correct sum
     assert np.array_equal(test_base_simulator.convolve_prior_with_existing_reviews(np.ones(5)), np.array([2, 2, 2, 2, 2]))
