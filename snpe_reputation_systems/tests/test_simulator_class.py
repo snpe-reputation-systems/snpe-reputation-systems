@@ -55,9 +55,17 @@ def test_load_simulations():
 # class TestSingleRhoSimulator: 
 #############################################
 
-@pytest.fixture
-def yield_SingleRhoSimulator():
+#@pytest.fixture
+#def yield_SingleRhoSimulator():
+#
+#    params = {
+#        "review_prior": np.array([1, 1, 1, 1, 1]),
+#        "tendency_to_rate": 1.0,
+#        "simulation_type": "histogram",
+#    }
+#    return SingleRhoSimulator(params)
 
+def yield_SingleRhoSimulator():
     params = {
         "review_prior": np.array([1, 1, 1, 1, 1]),
         "tendency_to_rate": 1.0,
@@ -70,7 +78,8 @@ def yield_SingleRhoSimulator():
 
 def test_rating_calculator(yield_SingleRhoSimulator, delta, simulation_id):
 
-    result = yield_SingleRhoSimulator.rating_calculator(delta, simulation_id)
+    simulator = yield_SingleRhoSimulator()
+    result = simulator.rating_calculator(delta, simulation_id)
 
     # Return type test
     assert isinstance(result, int), "Result is not an integer"
