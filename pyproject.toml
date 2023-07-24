@@ -2,7 +2,7 @@
 name = "snpe_reputation_systems"
 version = "0.0.1"
 description = "Dynamic Structural Modeling and Approximate Bayesian Inference of Online Reputation System"
-authors = ["Shrabastee Banerjee", "Narendra Mukherjee", "M. Amin Rahimian"]
+authors = ["Shrabastee Banerjee", "Narendra Mukherjee", "M. Amin Rahimian", "Diego Sanchez", "Fernando Iscar"]
 
 [tool.poetry.dependencies]
 python = "3.9.16"
