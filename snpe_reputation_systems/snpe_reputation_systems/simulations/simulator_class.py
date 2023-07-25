@@ -6,9 +6,11 @@ from typing import Deque, List, Optional, Union
 
 import numpy as np
 from joblib import Parallel, delayed
-from ..utils.functions import check_existing_reviews, check_simulation_parameters
-from ..utils.tqdm_utils import tqdm_joblib
 from tqdm import tqdm
+
+from ..utils.functions import (check_existing_reviews,
+                               check_simulation_parameters)
+from ..utils.tqdm_utils import tqdm_joblib
 
 
 class BaseSimulator:
