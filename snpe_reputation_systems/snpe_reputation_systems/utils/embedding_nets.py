@@ -37,8 +37,8 @@ def get_cnn_1d(
                 in_channels=num_channels,
                 out_channels=num_channels,
                 kernel_size=conv_kernel_size,
-                padding=(conv_kernel_size - 1) * (2 ** layer) // 2,
-                dilation=2 ** layer,
+                padding=(conv_kernel_size - 1) * (2**layer) // 2,
+                dilation=2**layer,
             )
         )
     cnn_modules.append(torch.nn.MaxPool1d(kernel_size=maxpool_kernel_size))
