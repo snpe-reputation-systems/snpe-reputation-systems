@@ -14,6 +14,7 @@ import torch
 # https://stackoverflow.com/questions/4417546/constantly-print-subprocess-output-while-process-is-running
 def terminal_execute(cmd: str) -> Iterator[str]:
     popen = subprocess.Popen(cmd, stdout=subprocess.PIPE, universal_newlines=True)
+    assert popen.stdout is not None
     for stdout_line in iter(popen.stdout.readline, ""):
         yield stdout_line
     popen.stdout.close()
