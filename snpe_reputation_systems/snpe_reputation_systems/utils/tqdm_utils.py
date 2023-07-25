@@ -40,21 +40,21 @@ def multi_progressbar(
     queue: Queue,
 ) -> None:
     pbars = [
-            tqdm(
-                desc=f'Worker {pid + 1}',
-                total=total,
-                position=pid,
-            )
-            for pid, total in enumerate(totals)
-        ]
+        tqdm(
+            desc=f"Worker {pid + 1}",
+            total=total,
+            position=pid,
+        )
+        for pid, total in enumerate(totals)
+    ]
 
     while True:
         try:
             message = queue.get()
-            if message.startswith('update'):
+            if message.startswith("update"):
                 pid = int(message[6:])
                 pbars[pid].update(1)
-            elif message == 'done':
+            elif message == "done":
                 break
         except:
             pass

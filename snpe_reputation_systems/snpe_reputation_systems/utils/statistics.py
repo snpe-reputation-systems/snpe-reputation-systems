@@ -23,11 +23,16 @@ def dirichlet_kl_divergence(alpha: torch.Tensor, beta: torch.Tensor) -> torch.Te
         - torch.sum(gammaln(alpha), axis=1)
         - gammaln(beta.sum(axis=1))
         + torch.sum(gammaln(beta), axis=1)
-        + torch.sum((alpha - beta) * (digamma(alpha) - digamma(alpha.sum(axis=1))[:, None]), axis=1,)
+        + torch.sum(
+            (alpha - beta) * (digamma(alpha) - digamma(alpha.sum(axis=1))[:, None]),
+            axis=1,
+        )
     )
 
 
-def review_histogram_correlation(observed_histograms: np.ndarray, simulated_histograms: np.ndarray) -> np.ndarray:
+def review_histogram_correlation(
+    observed_histograms: np.ndarray, simulated_histograms: np.ndarray
+) -> np.ndarray:
     # Calculates the pearson/linear correlation between observed and simulated review histograms
     # Each histogram is 5 numbers (1 for each rating) - this calculates the correlation between those 5
     # numbers in the observed and simulated histograms
@@ -54,7 +59,10 @@ def review_histogram_correlation(observed_histograms: np.ndarray, simulated_hist
     as the set of observed histograms of products
     """
     hpd = np.array(
-        [arviz.hdi(simulated_histograms[:, i, :], hdi_prob=0.95) for i in range(observed_histograms.shape[0])]
+        [
+            arviz.hdi(simulated_histograms[:, i, :], hdi_prob=0.95)
+            for i in range(observed_histograms.shape[0])
+        ]
     )
     assert hpd.shape == observed_histograms.shape + tuple(
         (2,)
@@ -65,7 +73,9 @@ def review_histogram_correlation(observed_histograms: np.ndarray, simulated_hist
     correlations = []
     for product in range(hpd.shape[0]):
         r_0, p_0 = pearsonr(observed_histograms[product, :], hpd[product, :, 0])
-        r_mean, p_mean = pearsonr(observed_histograms[product, :], simulation_mean[product, :])
+        r_mean, p_mean = pearsonr(
+            observed_histograms[product, :], simulation_mean[product, :]
+        )
         r_1, p_1 = pearsonr(observed_histograms[product, :], hpd[product, :, 1])
         correlations.append([r_0, r_mean, r_1])
 

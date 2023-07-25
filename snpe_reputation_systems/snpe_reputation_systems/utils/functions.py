@@ -27,7 +27,12 @@ def terminal_execute(cmd: str) -> None:
 # for a number of epochs, training is stopped
 # The torch model does need to have a best_validation_loss and epochs since last improvement
 # defined in __init__ for this to work
-def nn_converged(epoch: int, stop_after_epochs: int, validation_loss: torch.Tensor, model: torch.nn.Module) -> bool:
+def nn_converged(
+    epoch: int,
+    stop_after_epochs: int,
+    validation_loss: torch.Tensor,
+    model: torch.nn.Module,
+) -> bool:
     converged = False
     # (Re)-start the epoch count with the first epoch or any improvement.
     if epoch == 0 or validation_loss < model.best_validation_loss:
@@ -47,7 +52,9 @@ def nn_converged(epoch: int, stop_after_epochs: int, validation_loss: torch.Tens
 # A utility function to check that all the params in the dict of simulation parameters are arrays of the right shape
 # For each simulation id, we have a distribution for each simulation parameter
 # So the shape of the simulation parameter arrays should be (num_dist_samples X num_simulations X parameter dims)
-def check_simulation_parameters(simulation_parameters: dict, num_simulations: int) -> int:
+def check_simulation_parameters(
+    simulation_parameters: dict, num_simulations: int
+) -> int:
     # Assert that the shape of the simulation parameter arrays is (num_dist_samples X num_simulations X param dims)
     # So we check that all parameter arrays have shape >= 2
     assert np.all(
@@ -71,7 +78,10 @@ def check_simulation_parameters(simulation_parameters: dict, num_simulations: in
     # have the same num_dist_samples
     num_dist_samples = list(simulation_parameters.values())[0].shape[0]
     assert np.all(
-        [val.shape[0] == num_dist_samples for (key, val) in simulation_parameters.items()]
+        [
+            val.shape[0] == num_dist_samples
+            for (key, val) in simulation_parameters.items()
+        ]
     ), f"""
     Found unequal number of distribution samples for the simulation parameters as follows:
     {[key + ": " + str(val.shape[0]) for (key, val) in simulation_parameters.items()]}
@@ -89,7 +99,8 @@ def check_existing_reviews(existing_reviews: List[np.ndarray]) -> List[np.ndarra
     # for timeseries simulations
     # With marketplace simulations, we assume that this set of existing reviews is from a single marketplace
     np.testing.assert_array_equal(
-        [product.shape[1] for product in existing_reviews], np.repeat(5, len(existing_reviews))
+        [product.shape[1] for product in existing_reviews],
+        np.repeat(5, len(existing_reviews)),
     )
     # Also need to drop the first review (represented by a 5D histogram) for each product
     # Before doing this, check if the review timeseries begins with [1, 1, 1, 1, 1]. The simulations use this
