@@ -8,8 +8,7 @@ import numpy as np
 from joblib import Parallel, delayed
 from tqdm import tqdm
 
-from ..utils.functions import (check_existing_reviews,
-                               check_simulation_parameters)
+from ..utils.functions import check_existing_reviews, check_simulation_parameters
 from ..utils.tqdm_utils import tqdm_joblib
 
 
