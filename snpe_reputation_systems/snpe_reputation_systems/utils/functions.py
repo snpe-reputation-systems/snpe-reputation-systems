@@ -1,6 +1,6 @@
 import copy
 import subprocess
-from typing import List
+from typing import Iterator, List
 
 import numpy as np
 import torch
@@ -12,7 +12,7 @@ import torch
 # for path in terminal_execute(command):
 #   print(path, end="")
 # https://stackoverflow.com/questions/4417546/constantly-print-subprocess-output-while-process-is-running
-def terminal_execute(cmd: str) -> None:
+def terminal_execute(cmd: str) -> Iterator[str]:
     popen = subprocess.Popen(cmd, stdout=subprocess.PIPE, universal_newlines=True)
     for stdout_line in iter(popen.stdout.readline, ""):
         yield stdout_line

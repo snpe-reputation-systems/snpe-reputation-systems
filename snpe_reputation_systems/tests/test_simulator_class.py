@@ -6,9 +6,7 @@ from hypothesis import given, settings
 from hypothesis import strategies as st
 
 from ..snpe_reputation_systems.simulations.simulator_class import (
-    BaseSimulator,
-    SingleRhoSimulator,
-)
+    BaseSimulator, SingleRhoSimulator)
 
 # class TestBaseSimulator
 #############################################
