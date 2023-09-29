@@ -15,18 +15,17 @@ from ..utils.tqdm_utils import tqdm_joblib
 class BaseSimulator:
     def __init__(self, params: dict):
         self.review_prior = params.pop("review_prior")
-        assert (
-            len(self.review_prior) == 5
-        ), f"""
-        Prior Dirichlet distribution of simulated reviews needs to have 5 parameters,
-        but found {len(self.review_prior)}
-        """
+        if len(self.review_prior) != 5:
+            raise ValueError(
+                f"Prior Dirichlet distribution of simulated reviews needs to have 5 parameters, "
+                f"but found {len(self.review_prior)}"
+            )
         self.tendency_to_rate = params.pop("tendency_to_rate")
         self.simulation_type = params.pop("simulation_type")
-        assert self.simulation_type in [
-            "histogram",
-            "timeseries",
-        ], f"Can only simulate review histogram or timeseries, got simulation_type={self.simulation_type}"
+        if self.simulation_type not in ["histogram", "timeseries"]:
+            raise ValueError(
+                f"Can only simulate review histogram or timeseries, got simulation_type={self.simulation_type}"
+            )
         self.params = params
 
     @classmethod
@@ -36,9 +35,11 @@ class BaseSimulator:
     def convolve_prior_with_existing_reviews(
         self, simulated_reviews: np.ndarray
     ) -> np.ndarray:
-        assert (
-            self.review_prior.shape == simulated_reviews.shape
-        ), "Prior and simulated distributions of reviews should have the same shape"
+        if self.review_prior.shape != simulated_reviews.shape:
+            raise ValueError(
+                "Prior and simulated distributions of reviews should have the same shape"
+            )
+
         return self.review_prior + simulated_reviews
 
     def simulate_visitor_journey(
@@ -73,47 +74,34 @@ class BaseSimulator:
         **kwargs,
     ) -> None:
         if existing_reviews is not None:
-            assert (
-                simulation_parameters is not None
-            ), f"""
-            Existing reviews for products supplied, but no simulation parameters given
-            """
-            assert (
-                num_reviews_per_simulation is not None
-            ), f"""
-            Existing reviews for products supplied,but num_reviews_per_simulation not given. This gives the number of
-            TOTAL reviews per product desired
-            """
-            # Run checks on the shape and initial values of the review timeseries provided. These checks remove
-            # the first value in the timeseries before returning it (as that first value is automatically re-appended
-            # during simulations)
+            if simulation_parameters is None:
+                raise ValueError(
+                    "Existing reviews for products supplied, but no simulation parameters given"
+                )
+            if num_reviews_per_simulation is None:
+                raise ValueError(
+                    "Existing reviews for products supplied,but num_reviews_per_simulation not given. This gives the number of"
+                    "TOTAL reviews per product desired"
+                )
             existing_reviews = check_existing_reviews(existing_reviews)
-            # Also pick num_products = num_simulations from the provided existing reviews if the tests succeed. The
-            # provided num_simulations will then be ignored
             num_simulations = len(existing_reviews)
 
         if num_reviews_per_simulation is not None:
-            assert (
-                len(num_reviews_per_simulation) == num_simulations
-            ), f"""
-            {num_simulations} simulations to be done,
-            but {len(num_reviews_per_simulation)} review counts per simulation provided
-            """
+            if len(num_reviews_per_simulation) != num_simulations:
+                raise ValueError(
+                    f"{num_simulations} simulations to be done, "
+                    f"but {len(num_reviews_per_simulation)} review counts per simulation provided"
+                )
 
         if simulation_parameters is not None:
-            # Check that the provided simulation parameters have all the parameters (i.e, dict keys)
-            # that should be there. This is done by comparing to a dummy set of generated parameters
             dummy_parameters = self.generate_simulation_parameters(10)
-            assert set(simulation_parameters) == set(
-                dummy_parameters
-            ), f"""
-            Found parameters {simulation_parameters.keys()} in the provided parameters; expected
-            {dummy_parameters.keys()} as simulation parameters instead
-            """
+            if set(simulation_parameters) != set(dummy_parameters):
+                raise KeyError(
+                    f"Found parameters {simulation_parameters.keys()} in the provided parameters; expected"
+                    f"{dummy_parameters.keys()} as simulation parameters instead"
+                )
         else:
             simulation_parameters = self.generate_simulation_parameters(num_simulations)
-        # Run shape checks on the input dict of simulation parameters
-        # Store the number of distribution samples per parameter if the checks succeed
         self.params["num_dist_samples"] = check_simulation_parameters(
             simulation_parameters, num_simulations
         )
@@ -231,15 +219,19 @@ class SingleRhoSimulator(BaseSimulator):
     def mismatch_calculator(
         self, experience: float, expected_experience: float
     ) -> float:
-        assert experience in np.arange(
-            1, 6, 1
-        ), f"User's experience should be a whole number in [1, 5], got {experience} instead"
-        assert (
-            expected_experience >= 1.0 and expected_experience <= 5.0
-        ), f"""
-        Mean of user's expected distribution of experiences is a float in [1, 5],
-        got {expected_experience} instead
-        """
+        if experience not in np.arange(1, 6, 1):
+            raise ValueError(
+                f"User's experience should be a whole number in [1, 5], got {experience} instead"
+            )
+
+        if not (1.0 <= expected_experience <= 5.0):
+            raise ValueError(
+                f"""
+                Mean of user's expected distribution of experiences should be a float in [1, 5],
+                got {expected_experience} instead
+                """
+            )
+
         return experience - expected_experience
 
     def rating_calculator(self, delta: float, simulation_id: int) -> int:
@@ -296,12 +288,16 @@ class SingleRhoSimulator(BaseSimulator):
                 current_histogram[rating_index] += 1
                 simulated_reviews.append(current_histogram)
                 if len(simulated_reviews) > 1:
-                    assert (
+                    if (
                         np.sum(simulated_reviews[-1]) - np.sum(simulated_reviews[-2])
-                    ) == 1, """
-                    Please check the histograms provided in the array of existing reviews. These should be in the form
-                    of cumulative histograms and should only add 1 rating at a time
-                    """
+                        != 1
+                    ):
+                        raise ValueError(
+                            """
+                        Please check the histograms provided in the array of existing reviews. These should be in the form
+                        of cumulative histograms and should only add 1 rating at a time.
+                        """
+                        )
                 total_visitors -= 1
 
         for visitor in range(total_visitors):
