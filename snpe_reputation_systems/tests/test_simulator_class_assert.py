@@ -152,7 +152,7 @@ class TestBaseSimulator:
             simulator.convolve_prior_with_existing_reviews(empty_arr)
 
     @staticmethod
-    def _gen_random_existing_reviews(num_products: int, depth: int):
+    def _gen_fake_existing_reviews(num_products: int, depth: int):
         """
         Assistant function for "test_simulate" method, generates a random array
         which is valid to be passed as the "existing_reviews" parameter. The number
@@ -232,7 +232,7 @@ class TestBaseSimulator:
         with pytest.raises(ValueError):
             simulator.simulate(
                 num_simulations=given_num_simulations,
-                existing_reviews=self._gen_random_existing_reviews(
+                existing_reviews=self._gen_fake_existing_reviews(
                     given_num_simulations, depth_existing_reviews
                 ),
             )
@@ -241,7 +241,7 @@ class TestBaseSimulator:
         with pytest.raises(ValueError):
             simulator.simulate(
                 num_simulations=given_num_simulations,
-                existing_reviews=self._gen_random_existing_reviews(
+                existing_reviews=self._gen_fake_existing_reviews(
                     given_num_simulations, depth_existing_reviews
                 ),
                 simulation_parameters={},
@@ -263,7 +263,7 @@ class TestBaseSimulator:
         with pytest.raises(ValueError):  # Case 2: existing_reviews != None
             simulator.simulate(
                 num_simulations=given_num_simulations,
-                existing_reviews=self._gen_random_existing_reviews(
+                existing_reviews=self._gen_fake_existing_reviews(
                     given_num_simulations_2,
                     depth_existing_reviews,
                 ),
@@ -278,7 +278,7 @@ class TestBaseSimulator:
         with pytest.raises(NotImplementedError):
             simulator.simulate(
                 num_simulations=given_num_simulations,
-                existing_reviews=self._gen_random_existing_reviews(
+                existing_reviews=self._gen_fake_existing_reviews(
                     given_num_simulations, depth_existing_reviews
                 ),
                 simulation_parameters={},
@@ -328,6 +328,30 @@ class TestSingleRhoSimulator(TestBaseSimulator):
         with pytest.raises(ValueError):
             simulator.mismatch_calculator(experience, wrong_expected_experience)
 
+    @staticmethod
+    def _gen_wrong_fake_existing_reviews(num_products: int, depth: int):
+        """
+        Assistant function for "test_simulate_review_histogram" method. Works
+        in the same way as "_gen_fake_existing_reviews" but producing histograms
+        where it seems that two ratings have been added at once with the objecting of
+        triggering a ValueError within "simulate_review_histogram".
+        """
+
+        # Initialize array with shape (num_products, time, 5)
+        existing_reviews = np.zeros((num_products, depth, 5), dtype=int)
+
+        # Fill array
+        for i in range(num_products):
+            # First row of each product
+            existing_reviews[i, 0] = np.array([1, 1, 1, 1, 1])
+
+            # Adding the subsequent lines with reviews being added randomly
+            for j in range(1, depth):
+                add_index = np.random.choice(5)
+                existing_reviews[i, j] = existing_reviews[i, j - 1] + np.array(
+                    [2 if k == add_index else 0 for k in range(5)]
+                )
+
     # @staticmethod
     @composite
     def _integer_and_array(draw):
@@ -360,6 +384,41 @@ class TestSingleRhoSimulator(TestBaseSimulator):
     @given(
         _integer_and_array(),
         integers(min_value=5, max_value=25),
+        integers(min_value=1, max_value=100),
+    )
+    def test_simulate_review_histogram(
+        self, int_and_array, depth_existing_reviews, simulation_id
+    ):
+        (
+            given_num_simulations,
+            given_num_simulations_2,
+            given_num_reviews_per_simulation,
+        ) = int_and_array
+
+        # Instantiate simulator
+        simulator = get_simulator(simulator_type=self.simulator_type)
+
+        # Testing correct case
+        simulator.simulate_review_histogram(
+            simulation_id=simulation_id,
+            existing_reviews=self.gen_fake_existing_reviews(
+                given_num_simulations, depth_existing_reviews
+            ),
+        )
+
+        # Testing incorrect case
+        with pytest.raises(ValueError):
+            simulator.simulate_review_histogram(
+                simulation_id=simulation_id,
+                existing_reviews=self.gen_wrong_fake_existing_reviews(
+                    given_num_simulations, depth_existing_reviews
+                ),
+            )
+
+    @settings(max_examples=50)
+    @given(
+        _integer_and_array(),
+        integers(min_value=5, max_value=25),
     )
     def test_simulate(self, int_and_array, depth_existing_reviews):
         """
@@ -373,7 +432,7 @@ class TestSingleRhoSimulator(TestBaseSimulator):
             given_num_reviews_per_simulation,
         ) = int_and_array
 
-        # Instantiate base simulator
+        # Instantiate simulator
         simulator = get_simulator(simulator_type=self.simulator_type)
 
         # If existing_reviews is not None:
@@ -382,7 +441,7 @@ class TestSingleRhoSimulator(TestBaseSimulator):
         with pytest.raises(ValueError):
             simulator.simulate(
                 num_simulations=given_num_simulations,
-                existing_reviews=self._gen_random_existing_reviews(
+                existing_reviews=self._gen_fake_existing_reviews(
                     given_num_simulations, depth_existing_reviews
                 ),
             )
@@ -391,7 +450,7 @@ class TestSingleRhoSimulator(TestBaseSimulator):
         with pytest.raises(ValueError):
             simulator.simulate(
                 num_simulations=given_num_simulations,
-                existing_reviews=self._gen_random_existing_reviews(
+                existing_reviews=self._gen_fake_existing_reviews(
                     given_num_simulations, depth_existing_reviews
                 ),
                 simulation_parameters={},
@@ -413,7 +472,7 @@ class TestSingleRhoSimulator(TestBaseSimulator):
         with pytest.raises(ValueError):  # Case 2: existing_reviews != None
             simulator.simulate(
                 num_simulations=given_num_simulations,
-                existing_reviews=self._gen_random_existing_reviews(
+                existing_reviews=self._gen_fake_existing_reviews(
                     given_num_simulations_2,
                     depth_existing_reviews,
                 ),
@@ -427,7 +486,7 @@ class TestSingleRhoSimulator(TestBaseSimulator):
         with pytest.raises(KeyError):
             simulator.simulate(
                 num_simulations=given_num_simulations,
-                existing_reviews=self._gen_random_existing_reviews(
+                existing_reviews=self._gen_fake_existing_reviews(
                     given_num_simulations, depth_existing_reviews
                 ),
                 simulation_parameters={},
