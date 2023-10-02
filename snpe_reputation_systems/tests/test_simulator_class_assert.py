@@ -406,7 +406,7 @@ class TestSingleRhoSimulator(TestBaseSimulator):
             ),
         )
 
-        # Testing incorrect case
+        # Testing incorrect case - existing reviews has a step different from 1
         with pytest.raises(ValueError):
             simulator.simulate_review_histogram(
                 simulation_id=simulation_id,
@@ -422,7 +422,7 @@ class TestSingleRhoSimulator(TestBaseSimulator):
     )
     def test_simulate(self, int_and_array, depth_existing_reviews):
         """
-        Testing "simulate" method according to the former "assert"cases provided for this
+        Testing "simulate" method according to the former "assert" cases provided for this
         BaseSimulator method in simulator_class.py
         """
 
