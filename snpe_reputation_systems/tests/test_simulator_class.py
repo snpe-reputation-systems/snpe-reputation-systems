@@ -204,7 +204,7 @@ def _integer_and_array(draw):
     _integer_and_array(),
     integers(min_value=5, max_value=25),
 )
-def test_simulate(int_and_array, depth_existing_reviews):
+def test_simulate_base(int_and_array, depth_existing_reviews):
     """
     Testing "simulate" method according to the former "assert"cases provided for this
     BaseSimulator method in simulator_class.py
@@ -341,34 +341,6 @@ def _gen_wrong_fake_existing_reviews(num_products: int, depth: int):
             )
 
 
-@composite
-def _integer_and_array(draw):
-    """
-    Function for composite hypothesis strategy.
-
-    This is required as in the "simulate" method, num_reviews_per_simulation
-    is expected to have a length equal to num_simulations.
-
-    Accordingly, the function return the value for num_simulations and an appropriate
-    num_reviews_per_simulation array
-    """
-    n = draw(integers(min_value=1, max_value=50))
-    array = draw(arrays(int, n, elements=integers(min_value=1, max_value=50)))
-
-    n_2 = n
-    attempts = 0
-    while n_2 == n and attempts < 100:
-        n_2 = draw(integers(min_value=5, max_value=50))
-        attempts += 1
-
-    assume(n_2 != n)
-    return (
-        n,
-        n_2,
-        array,
-    )  # num_simulations, num_simlations_2, num_reviews_per_simulation
-
-
 @settings(max_examples=50)
 @given(
     _integer_and_array(),
@@ -410,7 +382,7 @@ def test_simulate_review_histogram(
     _integer_and_array(),
     integers(min_value=5, max_value=25),
 )
-def test_simulate(int_and_array, depth_existing_reviews):
+def test_simulate_singlerho(int_and_array, depth_existing_reviews):
     """
     Testing "simulate" method according to the former "assert" cases provided for this
     BaseSimulator method in simulator_class.py
