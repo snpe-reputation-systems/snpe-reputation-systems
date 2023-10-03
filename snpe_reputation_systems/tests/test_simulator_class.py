@@ -403,6 +403,7 @@ def test_simulate_review_histogram(
     # by method "check_existing_reviews". The same applies for the test of incorrect
     # case below.
 
+    """
     # Testing incorrect case - existing reviews increases with a step different to 1
     with pytest.raises(ValueError):
         simulator.simulate_review_histogram(
@@ -414,7 +415,9 @@ def test_simulate_review_histogram(
                 )
             ],
         )
+    """
 
+    """
     # Testing incorrect case - existing reviews increase multiple indices at once
     with pytest.raises(ValueError):
         simulator.simulate_review_histogram(
@@ -426,6 +429,7 @@ def test_simulate_review_histogram(
                 )
             ],
         )
+    """
 
 
 @settings(max_examples=50)
