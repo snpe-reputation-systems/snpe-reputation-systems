@@ -328,13 +328,18 @@ def test_mismatch_calculator(
         simulator.mismatch_calculator(experience, wrong_expected_experience)
 
 
-def _gen_wrong_fake_existing_reviews(num_products: int, depth: int):
+def _gen_wrong_fake_existing_reviews(
+    num_products: int, depth: int, step: int = 1, indices: int = 1
+):
     """
     Assistant function for "test_simulate_review_histogram" method. Works
-    in the same way as "_gen_fake_existing_reviews" but producing histograms
-    where it seems that two ratings have been added at once with the objecting of
-    triggering a ValueError within "simulate_review_histogram".
+    in a similar way to "_gen_fake_existing_reviews" but producing histograms
+    where ratings can be added with a step of two and to two indices at once
+    with the objective of triggering the ValueErrors within "simulate_review_histogram".
     """
+
+    if indices not in [1, 2]:
+        indices = 1
 
     # Initialize array with shape (num_products, time, 5)
     existing_reviews = np.zeros((num_products, depth, 5), dtype=int)
@@ -346,10 +351,13 @@ def _gen_wrong_fake_existing_reviews(num_products: int, depth: int):
 
         # Adding the subsequent lines with reviews being added randomly
         for j in range(1, depth):
-            add_index = np.random.choice(5)
-            existing_reviews[i, j] = existing_reviews[i, j - 1] + np.array(
-                [2 if k == add_index else 0 for k in range(5)]
-            )
+            add_indices = np.random.choice(5, size=indices, replace=False)
+            existing_reviews[i, j] = existing_reviews[i, j - 1].copy()
+
+            existing_reviews[i, j][add_indices[0]] += step
+
+            if indices == 2:
+                existing_reviews[i, j][add_indices[1]] += step
 
     return list(existing_reviews)
 
@@ -395,14 +403,26 @@ def test_simulate_review_histogram(
     # by method "check_existing_reviews". The same applies for the test of incorrect
     # case below.
 
-    # Testing incorrect case - existing reviews has a step different from 1
+    # Testing incorrect case - existing reviews increases with a step different to 1
     with pytest.raises(ValueError):
         simulator.simulate_review_histogram(
             simulation_id=simulation_id,
             existing_reviews=[
                 arr[1:]
                 for arr in _gen_wrong_fake_existing_reviews(
-                    given_num_simulations, depth_existing_reviews
+                    given_num_simulations, depth_existing_reviews, step=2
+                )
+            ],
+        )
+
+    # Testing incorrect case - existing reviews increase multiple indices at once
+    with pytest.raises(ValueError):
+        simulator.simulate_review_histogram(
+            simulation_id=simulation_id,
+            existing_reviews=[
+                arr[1:]
+                for arr in _gen_wrong_fake_existing_reviews(
+                    given_num_simulations, depth_existing_reviews, indices=2
                 )
             ],
         )

@@ -280,25 +280,37 @@ class SingleRhoSimulator(BaseSimulator):
         if existing_reviews is not None:
             product_reviews = existing_reviews[simulation_id]
             for review in product_reviews:
+                if sum(simulated_reviews[-1]) > 6:
+                    if (
+                        sum(review - last_review) != 1
+                    ):  # Check that ratings are added one by one. (i.e. histogram cannot go from [1,1,1,1,2] to [1,1,1,1,4])
+                        raise ValueError(
+                            """
+                            Please check the histograms provided in the array of existing reviews. These should be in the form
+                            of cumulative histograms and should only add 1 rating at a time.
+                            """
+                        )
+
                 # We use the same manner of appending existing review histograms to simulated_reviews as if
                 # those histograms were actually produced during simulations. This ensures that the same dtype is
                 # appended to the deque always and keeps the size of the deque as small as possible
+
                 current_histogram = simulated_reviews[-1].copy()
-                rating_index = np.where(review - current_histogram)[0][0]
-                current_histogram[rating_index] += 1
-                simulated_reviews.append(current_histogram)
-                if len(simulated_reviews) > 1:
-                    if (
-                        np.sum(simulated_reviews[-1]) - np.sum(simulated_reviews[-2])
-                        != 1
-                    ):
-                        raise ValueError(
-                            """
+                rating_index = np.where(review - current_histogram)[0]
+                if (
+                    len(rating_index) != 1
+                ):  # Check that only 1 rating is added at a time. (i.e. histogram cannot go from [1,1,1,1,2] to [1,2,1,1,3])
+                    raise ValueError(
+                        """
                         Please check the histograms provided in the array of existing reviews. These should be in the form
                         of cumulative histograms and should only add 1 rating at a time.
                         """
-                        )
+                    )
+
+                current_histogram[rating_index[0]] += 1
+                simulated_reviews.append(current_histogram)
                 total_visitors -= 1
+                last_review = review
 
         for visitor in range(total_visitors):
             rating_index = self.simulate_visitor_journey(
