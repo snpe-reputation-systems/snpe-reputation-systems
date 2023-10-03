@@ -352,9 +352,11 @@ def test_simulate_review_histogram(
 ):
     (
         given_num_simulations,
-        given_num_simulations_2,
-        given_num_reviews_per_simulation,
+        _,
+        _,
     ) = int_and_array
+
+    assume(simulation_id < given_num_simulations)
 
     # Instantiate simulator
     simulator = get_simulator(simulator_type="SingleRho")
@@ -364,7 +366,7 @@ def test_simulate_review_histogram(
         simulation_id=simulation_id,
         existing_reviews=_gen_fake_existing_reviews(
             given_num_simulations, depth_existing_reviews
-        ),
+        )[1:],
     )
 
     # Testing incorrect case - existing reviews has a step different from 1
@@ -373,7 +375,7 @@ def test_simulate_review_histogram(
             simulation_id=simulation_id,
             existing_reviews=_gen_wrong_fake_existing_reviews(
                 given_num_simulations, depth_existing_reviews
-            ),
+            )[1:],
         )
 
 
