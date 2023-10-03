@@ -4,10 +4,10 @@ import hypothesis
 import numpy as np
 import pandas as pd
 import pytest
-from hypothesis import given, settings
+from hypothesis import assume, given, settings
 from hypothesis import strategies as st
 from hypothesis.extra.numpy import arrays
-from hypothesis.strategies import floats, none
+from hypothesis.strategies import composite, floats, integers, none, text, tuples
 from numpy import float64
 
 from ..snpe_reputation_systems.simulations.simulator_class import (
@@ -17,281 +17,478 @@ from ..snpe_reputation_systems.simulations.simulator_class import (
     SingleRhoSimulator,
 )
 
+
+def get_simulator(
+    simulator_type: str,
+    review_prior=np.array([1, 1, 1, 1, 1]),
+    tendency_to_rate=0.05,
+    simulation_type="timeseries",
+):
+    """
+    Returns a functional instance of the desired simulator class to use for the different
+    tests for its methods.
+
+    Although in most cases the default values set for `params` would work,
+    the option to manually modify these has been considered in case such
+    flexibility is necesary later in the testing design and implementation
+    process.
+    """
+
+    params = {
+        "review_prior": review_prior,
+        "tendency_to_rate": tendency_to_rate,
+        "simulation_type": simulation_type,
+    }
+
+    if simulator_type == "Base":
+        return BaseSimulator(params)
+
+    elif simulator_type == "SingleRho":
+        return SingleRhoSimulator(params)
+
+
 # class TestBaseSimulator
 #############################################
 
-# Assert translated:
 
+class TestBaseSimulator:
+    def __init__(self) -> None:
+        self.simulator_type = "Base"
 
-def test_simulator_init_errors():
-    params = {
-        "review_prior": np.array([1, 1, 1, 1, 1, 1]),  # more than 5 parameters
-        "tendency_to_rate": 1.0,
-        "simulation_type": "histogram",
-    }
-    with pytest.raises(
-        ValueError,
-        match="Prior Dirichlet distribution of simulated reviews needs to have 5 parameters",
-    ):
-        BaseSimulator(params)
+    @settings(max_examples=10)
+    @given(
+        arrays(int, 5, elements=integers(min_value=0, max_value=100)),
+        arrays(
+            int,
+            shape=tuples(integers(1, 10)),
+            elements=integers(min_value=0, max_value=100),
+        ),
+        text(min_size=3, max_size=15),
+    )
+    def test___init__(self, array_int5, array_not5, random_string):
+        """
+        Testing builder method by providing it with innapropriate paramerters
+        according to the former "assert"cases provided for BaseSimulator
+        in simulator_class.py
+        """
 
-    params = {
-        "review_prior": np.array([1, 1, 1, 1, 1]),
-        "tendency_to_rate": 1.0,
-        "simulation_type": "incorrect_type",  # incorrect simulation_type
-    }
-    with pytest.raises(
-        ValueError, match="Can only simulate review histogram or timeseries"
-    ):
-        BaseSimulator(params)
+        # Hypothesis rule so array_not5 cannot take the "correct" shape (5,)
+        assume(array_not5.shape != (5,))
 
+        # Testing correct cases
 
-# ChatGPT test suggestion (WIP):
-# Returns an example dictionary to enable tests
-def generate_simulation_parameters_stub(num_simulations: int) -> dict:
-    return {"param1": 1}
-
-
-def test_simulate_errors():
-    params = {
-        "review_prior": np.array([1, 2, 3, 4, 5]),
-        "tendency_to_rate": 0.5,
-        "simulation_type": "histogram",
-    }
-    simulator = BaseSimulator(params)
-    simulator.generate_simulation_parameters = generate_simulation_parameters_stub
-
-    # Test existing reviews without simulation parameters
-    with pytest.raises(
-        ValueError,
-        match="Existing reviews for products supplied, but no simulation parameters given",
-    ):
-        simulator.simulate(5, existing_reviews=[np.array([1, 2, 3])])
-
-    # Test existing reviews without num_reviews_per_simulation
-    with pytest.raises(
-        ValueError,
-        match="Existing reviews for products supplied,but num_reviews_per_simulation not given",
-    ):
-        simulator.simulate(
-            5, simulation_parameters={}, existing_reviews=[np.array([1, 2, 3])]
+        assert isinstance(
+            get_simulator(simulator_type=self.simulator_type),
+            BaseSimulator,
         )
 
-    # Test mismatching num_reviews_per_simulation and num_simulations
-    with pytest.raises(
-        ValueError,
-        match=r"\d+ simulations to be done, but \d+ review counts per simulation provided",
-    ):
-        simulator.simulate(5, num_reviews_per_simulation=np.array([1, 2, 3]))
-
-    # Test incorrect simulation_parameters
-    with pytest.raises(
-        KeyError,
-        match=r"Found parameters dict_keys\(\[.*\]\) in the provided parameters; expecteddict_keys\(\[.*\]\) as simulation parameters instead",
-    ):
-        simulator.simulate(
-            5, simulation_parameters={"incorrect_key": "incorrect_value"}
+        assert isinstance(
+            get_simulator(simulator_type=self.simulator_type, review_prior=array_int5),
+            BaseSimulator,
         )
 
+        assert isinstance(
+            get_simulator(
+                simulator_type=self.simulator_type, simulation_type="histogram"
+            ),
+            BaseSimulator,
+        )
 
-# Hypothesis:
+        # Testing incorrect shape of "review_prior"
 
+        with pytest.raises(
+            ValueError,
+            match="Prior Dirichlet distribution of simulated reviews needs to have 5 parameters",
+        ):
+            get_simulator(simulator_type=self.simulator_type, review_prior=array_not5)
 
-@given(
-    arrays(float64, 5, elements=floats(min_value=-100, max_value=100)),
-    arrays(float64, 6, elements=floats(min_value=-100, max_value=100)),
-    arrays(float64, 0),
-    none(),
-)
-def test_convolve_prior_with_existing_reviews(arr1, arr2, empty_arr, none_value):
-    # BaseSimulator instance
-    params = {
-        "review_prior": np.ones(5),
-        "tendency_to_rate": 0.05,
-        "simulation_type": "timeseries",
-    }
-    base_simulator = BaseSimulator(params)
+        # Testing incorrect values for "simulation type"
 
-    # Test of correct sum
-    result = base_simulator.convolve_prior_with_existing_reviews(arr1)
-    assert np.array_equal(result, np.ones(5) + arr1)
+        with pytest.raises(
+            ValueError, match="Can only simulate review histogram or timeseries"
+        ):
+            get_simulator(
+                simulator_type=self.simulator_type, simulation_type=random_string
+            )
 
-    # Input shape test
-    with pytest.raises(ValueError):
-        base_simulator.convolve_prior_with_existing_reviews(arr2)
-
-    # Empty array input test
-    with pytest.raises(ValueError):
-        base_simulator.convolve_prior_with_existing_reviews(empty_arr)
-
-    # Output type test
-    assert isinstance(result, np.ndarray)
-
-    # Null input test (note: it's different from empty array input test)
-    with pytest.raises(AttributeError):
-        base_simulator.convolve_prior_with_existing_reviews(none_value)
-
-
-def test_simulate():
-    pass
-
-
-def test_yield_simulation_param_per_visitor():
-    pass
-
-
-@pytest.fixture
-def generate_mock_simulation_parameters(test_base_simulator):
-    pass
-
-
-def test_save_simulations():
-    pass
-
-
-def test_load_simulations():
-    pass
-
-
-# class TestSingleRhoSimulator:
-#############################################
-
-# Instantiate SingleRho:
-
-
-def yield_SingleRhoSimulator():
-    params = {
-        "review_prior": np.array([1, 1, 1, 1, 1]),
-        "tendency_to_rate": 1.0,
-        "simulation_type": "histogram",
-    }
-    return SingleRhoSimulator(params)
-
-
-# Assert translated:
-
-
-@settings(max_examples=10)
-@given(
-    experience=st.integers(min_value=1, max_value=5),
-    expected_experience=st.floats(min_value=1, max_value=5),
-    wrong_experience=st.integers(min_value=6, max_value=10),
-    wrong_expected_experience=st.floats(min_value=6, max_value=10),
-)
-def test_mismatch_calculator(
-    experience, expected_experience, wrong_experience, wrong_expected_experience
-):
-    simulator = yield_SingleRhoSimulator()
-
-    # Test of correct substraction
-    assert simulator.mismatch_calculator(experience, expected_experience) == (
-        experience - expected_experience
+    @settings(max_examples=10)
+    @given(
+        arrays(
+            dtype=int,
+            shape=tuples(integers(1, 10)),
+            elements=integers(min_value=0, max_value=100),
+        ),
+        arrays(dtype=int, shape=5, elements=integers(min_value=0, max_value=100)),
+        arrays(int, 0),
     )
+    def test_convolve_prior_with_existing_reviews(
+        self, array_not5, array_int5, empty_arr
+    ):
+        """
+        Testing "convolve_prior_with_existing_reviews"
+        according to the former "assert"cases provided for this
+        BaseSimulator method in simulator_class.py
+        """
 
-    # Output type test
-    assert isinstance(
-        simulator.mismatch_calculator(experience, expected_experience), float
+        # Hypothesis rule so array_not5 cannot take the "correct" shape (5,)
+        assume(array_not5.shape != (5,))
+
+        # Instantiate base simulator
+        simulator = get_simulator(simulator_type=self.simulator_type)
+
+        # Testing correct cases
+        result = simulator.convolve_prior_with_existing_reviews(array_int5)
+
+        assert np.array_equal(result, np.ones(5) + array_int5)
+
+        assert isinstance(result, np.ndarray)
+
+        # Testing incorrect cases (1)
+        with pytest.raises(ValueError):
+            simulator.convolve_prior_with_existing_reviews(array_not5)
+
+        # Testing  incorrect cases (2)
+        with pytest.raises(ValueError):
+            simulator.convolve_prior_with_existing_reviews(empty_arr)
+
+    @staticmethod
+    def _gen_fake_existing_reviews(num_products: int, depth: int):
+        """
+        Assistant function for "test_simulate" method, generates a random array
+        which is valid to be passed as the "existing_reviews" parameter. The number
+        of reviews is fixed by the parameter "depth" while the number of products is
+        be adjusted through the parameter "num_products". It returns an array of shape
+        (num_products, depth, 5) where the first row of each product is [1, 1, 1, 1, 1]
+        """
+
+        # Initialize array with shape (num_products, time, 5)
+        existing_reviews = np.zeros((num_products, depth, 5), dtype=int)
+
+        # Fill array
+        for i in range(num_products):
+            # First row of each product
+            existing_reviews[i, 0] = np.array([1, 1, 1, 1, 1])
+
+            # Adding the subsequent lines with reviews being added randomly
+            for j in range(1, depth):
+                add_index = np.random.choice(5)
+                existing_reviews[i, j] = existing_reviews[i, j - 1] + np.array(
+                    [1 if k == add_index else 0 for k in range(5)]
+                )
+
+        return list(existing_reviews)
+
+    # @staticmethod
+    @composite
+    def _integer_and_array(draw):
+        """
+        Function for composite hypothesis strategy.
+
+        This is required as in the "simulate" method, num_reviews_per_simulation
+        is expected to have a length equal to num_simulations.
+
+        Accordingly, the function return the value for num_simulations and an appropriate
+        num_reviews_per_simulation array
+        """
+        n = draw(integers(min_value=1, max_value=50))
+        array = draw(arrays(int, n, elements=integers(min_value=1, max_value=50)))
+
+        n_2 = n
+        attempts = 0
+        while n_2 == n and attempts < 100:
+            n_2 = draw(integers(min_value=5, max_value=50))
+            attempts += 1
+
+        assume(n_2 != n)
+        return (
+            n,
+            n_2,
+            array,
+        )  # num_simulations, num_simlations_2, num_reviews_per_simulation
+
+    @settings(max_examples=50)
+    @given(
+        _integer_and_array(),
+        integers(min_value=5, max_value=25),
     )
+    def test_simulate(self, int_and_array, depth_existing_reviews):
+        """
+        Testing "simulate" method according to the former "assert"cases provided for this
+        BaseSimulator method in simulator_class.py
+        """
 
-    # out-of-range experience test
-    with pytest.raises(ValueError):
-        simulator.mismatch_calculator(wrong_experience, expected_experience)
+        (
+            given_num_simulations,
+            given_num_simulations_2,
+            given_num_reviews_per_simulation,
+        ) = int_and_array
 
-    # out-of-range expected experience test
-    with pytest.raises(ValueError):
-        simulator.mismatch_calculator(experience, wrong_expected_experience)
+        # Instantiate base simulator
+        simulator = get_simulator(simulator_type=self.simulator_type)
 
+        # If existing_reviews is not None:
 
-# Hypothesis:
+        ## Expect ValueError if simulation_parameters is None
+        with pytest.raises(ValueError):
+            simulator.simulate(
+                num_simulations=given_num_simulations,
+                existing_reviews=self._gen_fake_existing_reviews(
+                    given_num_simulations, depth_existing_reviews
+                ),
+            )
 
+            ## Expect ValueError if num_reviews_per_simulation is None
+        with pytest.raises(ValueError):
+            simulator.simulate(
+                num_simulations=given_num_simulations,
+                existing_reviews=self._gen_fake_existing_reviews(
+                    given_num_simulations, depth_existing_reviews
+                ),
+                simulation_parameters={},
+            )
 
-@settings(max_examples=20)
-@given(
-    delta=st.floats(min_value=-4, max_value=4), simulation_id=st.integers(min_value=0)
-)
-def test_rating_calculator(delta, simulation_id):
-    simulator = yield_SingleRhoSimulator()
-    result = simulator.rating_calculator(delta, simulation_id)
+        # If all three (existing_reviews, num_reviews_per_simulation, simulation_parameters) exist:
+        # code continues
 
-    # Return type test
-    assert isinstance(result, int), "Result is not an integer"
+        # If num_reviews_per_simulation exists:
 
-    # Result range test
-    assert 0 <= result <= 4, "Result is out of expected range"
+        ## Expect ValueError if len(num_reviews_per_simulation) != num_simulations
+        with pytest.raises(ValueError):  # Case 1: existing_reviesw == None
+            simulator.simulate(
+                num_simulations=given_num_simulations_2,
+                simulation_parameters={},
+                num_reviews_per_simulation=given_num_reviews_per_simulation,
+            )
 
-    # Test of correct output
-    if delta <= -1.5:
-        assert result == 0
-    elif delta > -1.5 and delta <= -0.5:
-        assert result == 1
-    elif delta > -0.5 and delta <= 0.5:
-        assert result == 2
-    elif delta > 0.5 and delta <= 1.5:
-        assert result == 3
-    else:
-        assert result == 4
+        with pytest.raises(ValueError):  # Case 2: existing_reviews != None
+            simulator.simulate(
+                num_simulations=given_num_simulations,
+                existing_reviews=self._gen_fake_existing_reviews(
+                    given_num_simulations_2,
+                    depth_existing_reviews,
+                ),
+                simulation_parameters={},
+                num_reviews_per_simulation=given_num_reviews_per_simulation,
+            )
 
+        # If simulation_parameters is not None:
 
-# NEW ASSERT INTO TEST (WIP):
-
-# From simulator_class.py
-# (inside SingleRhoSimulator class, simulate_review_histogram method):
-
-#  if len(simulated_reviews) > 1:
-#      if np.sum(simulated_reviews[-1]) - np.sum(simulated_reviews[-2]) != 1:
-#          raise ValueError("""
-#          Please check the histograms provided in the array of existing reviews. These should be in the form
-#          of cumulative histograms and should only add 1 rating at a time.
-#          """)
-
-# let's try to implement this test here (needs debugging):
-
-"""
-def test_single_rho_simulator_histogram_error():
-    params = {
-        "review_prior": np.array([1, 1, 1, 1, 1]),
-        "tendency_to_rate": 0.5,
-        "simulation_type": "histogram",
-        # other necessary parameters
-    }
-
-    simulator = SingleRhoSimulator(params)
-    existing_reviews = [np.array([1, 1, 0, 0, 0]), np.array([2, 1, 0, 0, 0])]
-
-    # Make sure the reviews are different
-    assert not np.array_equal(existing_reviews[0], existing_reviews[1])
-
-    with pytest.raises(ValueError, match="No change in reviews. Check the provided review data."):
-        simulator.simulate_review_histogram(0, None, existing_reviews)"""
+        ## Expect NotImplementedError if set(simulation_parameters) != set(dummy_parameters):
+        ## This is a result of the method "generate_simulation_parameters" not being implemented still for BaseSimulator
+        with pytest.raises(NotImplementedError):
+            simulator.simulate(
+                num_simulations=given_num_simulations,
+                existing_reviews=self._gen_fake_existing_reviews(
+                    given_num_simulations, depth_existing_reviews
+                ),
+                simulation_parameters={},
+                num_reviews_per_simulation=given_num_reviews_per_simulation,
+            )
 
 
-# class TestDoubleRhoSimulator:
+# class TestSingleRhoSimulator
 #############################################
 
 
-def test_double_rho_simulator_generate_simulation_parameters():
-    num_simulations = 10
-    params = DoubleRhoSimulator.generate_simulation_parameters(num_simulations)
+class TestSingleRhoSimulator(TestBaseSimulator):
+    def __init__(self) -> None:
+        self.simulator_type = "SingleRho"
 
-    assert isinstance(params, dict), "Result is not a dictionary"
-    assert "rho" in params, "Result does not contain rho"
-    assert params["rho"].shape == (
-        10,
-        num_simulations,
-        2,
-    ), "Result does not have correct shape"
+    @settings(max_examples=10)
+    @given(
+        integers(min_value=1, max_value=5),
+        floats(min_value=1, max_value=5),
+        integers(min_value=6, max_value=10),
+        floats(min_value=6, max_value=10),
+    )
+    def test_mismatch_calculator(
+        self,
+        experience,
+        expected_experience,
+        wrong_experience,
+        wrong_expected_experience,
+    ):
+        simulator = get_simulator(simulator_type=self.simulator_type)
 
+        # Testing correct cases
+        assert simulator.mismatch_calculator(experience, expected_experience) == (
+            experience - expected_experience
+        )
 
-# class TestHerdingSimulator:
-#############################################
+        # Output type test
+        assert isinstance(
+            simulator.mismatch_calculator(experience, expected_experience), float
+        )
 
+        # out-of-range experience test
+        with pytest.raises(ValueError):
+            simulator.mismatch_calculator(wrong_experience, expected_experience)
 
-def test_herding_simulator_generate_simulation_parameters():
-    num_simulations = 10
-    params = HerdingSimulator.generate_simulation_parameters(num_simulations)
+        # out-of-range expected experience test
+        with pytest.raises(ValueError):
+            simulator.mismatch_calculator(experience, wrong_expected_experience)
 
-    assert isinstance(params, dict)
-    assert "rho" in params
-    assert "h_p" in params
-    assert params["rho"].shape == (10, num_simulations, 2)
-    assert params["h_p"].shape == (10, num_simulations)
+    @staticmethod
+    def _gen_wrong_fake_existing_reviews(num_products: int, depth: int):
+        """
+        Assistant function for "test_simulate_review_histogram" method. Works
+        in the same way as "_gen_fake_existing_reviews" but producing histograms
+        where it seems that two ratings have been added at once with the objecting of
+        triggering a ValueError within "simulate_review_histogram".
+        """
+
+        # Initialize array with shape (num_products, time, 5)
+        existing_reviews = np.zeros((num_products, depth, 5), dtype=int)
+
+        # Fill array
+        for i in range(num_products):
+            # First row of each product
+            existing_reviews[i, 0] = np.array([1, 1, 1, 1, 1])
+
+            # Adding the subsequent lines with reviews being added randomly
+            for j in range(1, depth):
+                add_index = np.random.choice(5)
+                existing_reviews[i, j] = existing_reviews[i, j - 1] + np.array(
+                    [2 if k == add_index else 0 for k in range(5)]
+                )
+
+    # @staticmethod
+    @composite
+    def _integer_and_array(draw):
+        """
+        Function for composite hypothesis strategy.
+
+        This is required as in the "simulate" method, num_reviews_per_simulation
+        is expected to have a length equal to num_simulations.
+
+        Accordingly, the function return the value for num_simulations and an appropriate
+        num_reviews_per_simulation array
+        """
+        n = draw(integers(min_value=1, max_value=50))
+        array = draw(arrays(int, n, elements=integers(min_value=1, max_value=50)))
+
+        n_2 = n
+        attempts = 0
+        while n_2 == n and attempts < 100:
+            n_2 = draw(integers(min_value=5, max_value=50))
+            attempts += 1
+
+        assume(n_2 != n)
+        return (
+            n,
+            n_2,
+            array,
+        )  # num_simulations, num_simlations_2, num_reviews_per_simulation
+
+    @settings(max_examples=50)
+    @given(
+        _integer_and_array(),
+        integers(min_value=5, max_value=25),
+        integers(min_value=1, max_value=100),
+    )
+    def test_simulate_review_histogram(
+        self, int_and_array, depth_existing_reviews, simulation_id
+    ):
+        (
+            given_num_simulations,
+            given_num_simulations_2,
+            given_num_reviews_per_simulation,
+        ) = int_and_array
+
+        # Instantiate simulator
+        simulator = get_simulator(simulator_type=self.simulator_type)
+
+        # Testing correct case
+        simulator.simulate_review_histogram(
+            simulation_id=simulation_id,
+            existing_reviews=self.gen_fake_existing_reviews(
+                given_num_simulations, depth_existing_reviews
+            ),
+        )
+
+        # Testing incorrect case - existing reviews has a step different from 1
+        with pytest.raises(ValueError):
+            simulator.simulate_review_histogram(
+                simulation_id=simulation_id,
+                existing_reviews=self.gen_wrong_fake_existing_reviews(
+                    given_num_simulations, depth_existing_reviews
+                ),
+            )
+
+    @settings(max_examples=50)
+    @given(
+        _integer_and_array(),
+        integers(min_value=5, max_value=25),
+    )
+    def test_simulate(self, int_and_array, depth_existing_reviews):
+        """
+        Testing "simulate" method according to the former "assert" cases provided for this
+        BaseSimulator method in simulator_class.py
+        """
+
+        (
+            given_num_simulations,
+            given_num_simulations_2,
+            given_num_reviews_per_simulation,
+        ) = int_and_array
+
+        # Instantiate simulator
+        simulator = get_simulator(simulator_type=self.simulator_type)
+
+        # If existing_reviews is not None:
+
+        ## Expect ValueError if simulation_parameters is None
+        with pytest.raises(ValueError):
+            simulator.simulate(
+                num_simulations=given_num_simulations,
+                existing_reviews=self._gen_fake_existing_reviews(
+                    given_num_simulations, depth_existing_reviews
+                ),
+            )
+
+            ## Expect ValueError if num_reviews_per_simulation is None
+        with pytest.raises(ValueError):
+            simulator.simulate(
+                num_simulations=given_num_simulations,
+                existing_reviews=self._gen_fake_existing_reviews(
+                    given_num_simulations, depth_existing_reviews
+                ),
+                simulation_parameters={},
+            )
+
+        # If all three (existing_reviews, num_reviews_per_simulation, simulation_parameters) exist:
+        # code continues
+
+        # If num_reviews_per_simulation exists:
+
+        ## Expect ValueError if len(num_reviews_per_simulation) != num_simulations
+        with pytest.raises(ValueError):  # Case 1: existing_reviesw == None
+            simulator.simulate(
+                num_simulations=given_num_simulations_2,
+                simulation_parameters={},
+                num_reviews_per_simulation=given_num_reviews_per_simulation,
+            )
+
+        with pytest.raises(ValueError):  # Case 2: existing_reviews != None
+            simulator.simulate(
+                num_simulations=given_num_simulations,
+                existing_reviews=self._gen_fake_existing_reviews(
+                    given_num_simulations_2,
+                    depth_existing_reviews,
+                ),
+                simulation_parameters={},
+                num_reviews_per_simulation=given_num_reviews_per_simulation,
+            )
+
+        # If simulation_parameters is not None:
+
+        ## Expect NotImplementedError if set(simulation_parameters) != set(dummy_parameters):
+        with pytest.raises(KeyError):
+            simulator.simulate(
+                num_simulations=given_num_simulations,
+                existing_reviews=self._gen_fake_existing_reviews(
+                    given_num_simulations, depth_existing_reviews
+                ),
+                simulation_parameters={},
+                num_reviews_per_simulation=given_num_reviews_per_simulation,
+            )
