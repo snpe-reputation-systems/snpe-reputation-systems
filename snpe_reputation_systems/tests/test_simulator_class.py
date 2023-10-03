@@ -364,18 +364,24 @@ def test_simulate_review_histogram(
     # Testing correct case
     simulator.simulate_review_histogram(
         simulation_id=simulation_id,
-        existing_reviews=_gen_fake_existing_reviews(
-            given_num_simulations, depth_existing_reviews
-        )[1:],
+        existing_reviews=[
+            arr[1:]
+            for arr in _gen_fake_existing_reviews(
+                given_num_simulations, depth_existing_reviews
+            )
+        ],
     )
 
     # Testing incorrect case - existing reviews has a step different from 1
     with pytest.raises(ValueError):
         simulator.simulate_review_histogram(
             simulation_id=simulation_id,
-            existing_reviews=_gen_wrong_fake_existing_reviews(
-                given_num_simulations, depth_existing_reviews
-            )[1:],
+            existing_reviews=[
+                arr[1:]
+                for arr in _gen_wrong_fake_existing_reviews(
+                    given_num_simulations, depth_existing_reviews
+                )
+            ],
         )
 
 
