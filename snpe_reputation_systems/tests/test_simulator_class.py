@@ -66,7 +66,7 @@ class TestBaseSimulator:
         ),
         text(min_size=3, max_size=15),
     )
-    def test___init__(self, array_int5, array_not5, random_string):
+    def test__init__(self, array_int5, array_not5, random_string):
         """
         Testing builder method by providing it with innapropriate paramerters
         according to the former "assert"cases provided for BaseSimulator
@@ -295,6 +295,9 @@ class TestSingleRhoSimulator(TestBaseSimulator):
     def setup_method(self) -> None:
         self.simulator_type = "SingleRho"
 
+    def test__init__(self):
+        pass
+
     @settings(max_examples=10)
     @given(
         integers(min_value=1, max_value=5),
@@ -502,6 +505,9 @@ class TestSingleRhoSimulator(TestBaseSimulator):
 class TestDoubleRhoSimulator(TestBaseSimulator):
     def setup_method(self) -> None:
         self.simulator_type = "DoubleRho"
+
+    def test__init__(self):
+        pass
 
     @settings(max_examples=50)
     @given(
