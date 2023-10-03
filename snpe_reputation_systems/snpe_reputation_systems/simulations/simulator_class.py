@@ -279,6 +279,11 @@ class SingleRhoSimulator(BaseSimulator):
         # If existing reviews have been supplied, unravel them into the simulated reviews deque
         if existing_reviews is not None:
             product_reviews = existing_reviews[simulation_id]
+
+            # Define last review before the start of the loop to comply with formatting standards,
+            # however 'last_review' should not be used after the end of the first iteration.
+            last_review = product_reviews[-1]
+
             for review in product_reviews:
                 if sum(simulated_reviews[-1]) > 6:
                     if (
