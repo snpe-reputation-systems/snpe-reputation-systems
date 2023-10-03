@@ -350,12 +350,12 @@ class DoubleRhoSimulator(SingleRhoSimulator):
         rho = self.yield_simulation_param_per_visitor(simulation_id, "rho")
         # Return the review only if mismatch is higher than rho
         # We use two rhos here - rho[0] is for negative mismatch, and rho[1] for positive mismatch
-        assert isinstance(
-            rho, np.ndarray
-        ), f"Expected np.ndarray type for rho, found {type(rho)} instead"
-        assert rho.shape == (
-            2,
-        ), f"Expecting shape (2,) for rho, got {rho.shape} instead"
+        if not isinstance(rho, np.ndarray):
+            raise ValueError(
+                f"Expected np.ndarray type for rho, found {type(rho)} instead"
+            )
+        if rho.shape != (2,):
+            raise ValueError(f"Expecting shape (2,) for rho, got {rho.shape} instead")
         # Tendency to rate governs baseline probability of returning review
         if np.random.random() <= self.tendency_to_rate:
             return True

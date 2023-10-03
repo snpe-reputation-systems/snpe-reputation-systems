@@ -7,7 +7,7 @@ import pytest
 from hypothesis import assume, given, settings
 from hypothesis import strategies as st
 from hypothesis.extra.numpy import arrays
-from hypothesis.strategies import composite, floats, integers, none, text, tuples
+from hypothesis.strategies import composite, floats, integers, lists, none, text, tuples
 from numpy import float64
 
 from ..snpe_reputation_systems.simulations.simulator_class import (
@@ -42,6 +42,9 @@ def get_simulator(
         return BaseSimulator(params)
 
     elif simulator_type == "SingleRho":
+        return SingleRhoSimulator(params)
+
+    elif simulator_type == "DoubleRho":
         return SingleRhoSimulator(params)
 
 
@@ -131,7 +134,7 @@ class TestBaseSimulator:
         # Hypothesis rule so array_not5 cannot take the "correct" shape (5,)
         assume(array_not5.shape != (5,))
 
-        # Instantiate base simulator
+        # Instantiate simulator
         simulator = get_simulator(simulator_type=self.simulator_type)
 
         # Testing correct cases
@@ -221,7 +224,7 @@ class TestBaseSimulator:
             given_num_reviews_per_simulation,
         ) = int_and_array
 
-        # Instantiate base simulator
+        # Instantiate simulator
         simulator = get_simulator(simulator_type=self.simulator_type)
 
         # If existing_reviews is not None:
@@ -490,3 +493,45 @@ class TestSingleRhoSimulator(TestBaseSimulator):
                 simulation_parameters={},
                 num_reviews_per_simulation=given_num_reviews_per_simulation,
             )
+
+
+# class TestDoubleRhoSimulator
+#############################################
+
+
+class TestDoubleRhoSimulator(TestBaseSimulator):
+    def __init__(self) -> None:
+        self.simulator_type = "DoubleRho"
+
+    @settings(max_examples=50)
+    @given(
+        lists(floats(), min_size=2, max_size=2),
+        arrays(dtype=np.float32, shape=integers(min_value=1)),
+        floats(
+            min_value=0, max_value=4
+        ),  # Required by the tested method but not used in practice
+        integers(
+            min_value=1, max_value=100
+        ),  # Required by the tested method but not used in practice
+    )
+    def test_decision_to_leave_review(
+        self, wrong_rho_1, wrong_rho_2, delta, simulation_id, mocker
+    ):
+        # Instantiate simulator
+        simulator = get_simulator(simulator_type=self.simulator_type)
+
+        assume(wrong_rho_2.shape[0] != 2)
+
+        mocker.patch.object(
+            simulator,
+            "yield_simulation_param_per_visitor",
+            side_effect=[wrong_rho_1, wrong_rho_2],
+        )
+
+        # Testing assert 1 (isinstance np.array)
+        with pytest.raises(ValueError):
+            simulator.decision_to_leave_review(delta=delta, simulation_id=simulation_id)
+
+        # Testing assert 2 (shape != 2)
+        with pytest.raises(ValueError):
+            simulator.decision_to_leave_review(delta=delta, simulation_id=simulation_id)
