@@ -405,7 +405,7 @@ class TestSingleRhoSimulator(TestBaseSimulator):
         # Testing correct case
         simulator.simulate_review_histogram(
             simulation_id=simulation_id,
-            existing_reviews=self.gen_fake_existing_reviews(
+            existing_reviews=self._gen_fake_existing_reviews(
                 given_num_simulations, depth_existing_reviews
             ),
         )
@@ -521,7 +521,7 @@ class TestDoubleRhoSimulator(TestBaseSimulator):
         ),  # Required by the tested method but not used in practice
     )
     def test_decision_to_leave_review(
-        self, wrong_rho_1, wrong_rho_2, delta, simulation_id, mocker
+        self, mocker, wrong_rho_1, wrong_rho_2, delta, simulation_id
     ):
         # Instantiate simulator
         simulator = get_simulator(simulator_type=self.simulator_type)
