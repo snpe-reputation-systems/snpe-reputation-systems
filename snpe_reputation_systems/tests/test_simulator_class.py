@@ -15,7 +15,6 @@ from ..snpe_reputation_systems.simulations.simulator_class import (
     DoubleRhoSimulator,
     SingleRhoSimulator,
 )
-
 from ..snpe_reputation_systems.utils.functions import check_simulation_parameters
 
 
