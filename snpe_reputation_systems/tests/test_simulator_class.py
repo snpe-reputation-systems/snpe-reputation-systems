@@ -16,12 +16,15 @@ from ..snpe_reputation_systems.simulations.simulator_class import (
     SingleRhoSimulator,
 )
 
+from ..snpe_reputation_systems.utils.functions import check_simulation_parameters
+
 
 def get_simulator(
     simulator_type: str,
     review_prior=np.array([1, 1, 1, 1, 1]),
     tendency_to_rate=0.05,
     simulation_type="timeseries",
+    given_num_simulations=10,
 ):
     """
     Returns a functional instance of the desired simulator class to use for the different
@@ -45,14 +48,14 @@ def get_simulator(
     elif simulator_type == "SingleRho":
         sim_to_yield = SingleRhoSimulator(params)
         sim_to_yield.simulation_parameters = sim_to_yield.generate_simulation_parameters(
-            50
+            given_num_simulations
         )  # 50 chosen as "num_simulations" because it is the max value allowed for n in the assitance method "_integer_and_array"
         return sim_to_yield
 
     elif simulator_type == "DoubleRho":
         sim_to_yield = DoubleRhoSimulator(params)
         sim_to_yield.simulation_parameters = sim_to_yield.generate_simulation_parameters(
-            50
+            given_num_simulations
         )  # 50 chosen as "num_simulations" because it is the max value allowed for n in the assitance method "_integer_and_array"
         return sim_to_yield
 
@@ -368,7 +371,14 @@ def test_simulate_review_histogram(
     assume(simulation_id < given_num_simulations)
 
     # Instantiate simulator
-    simulator = get_simulator(simulator_type="SingleRho")
+    simulator = get_simulator(
+        simulator_type="SingleRho", given_num_simulations=given_num_simulations
+    )
+    # Parameter "given_num_simulations" is used to set and appropriate num of simutlations compatible with the expectations of "check_simulation_parameters_method"
+
+    simulator.params["num_dist_samples"] = check_simulation_parameters(
+        simulator.simulation_parameters, given_num_simulations
+    )
 
     # Testing correct case
     simulator.simulate_review_histogram(
@@ -379,7 +389,10 @@ def test_simulate_review_histogram(
                 given_num_simulations, depth_existing_reviews
             )
         ],
-    )
+    )  # Initial review state (i.e. [1, 1, 1, 1, 1]) is removed as by the time that
+    # simulate review histogram is called this is supposed to have been done already
+    # by method "check_existing_reviews". The same applies for the test of incorrect
+    # case below.
 
     # Testing incorrect case - existing reviews has a step different from 1
     with pytest.raises(ValueError):
