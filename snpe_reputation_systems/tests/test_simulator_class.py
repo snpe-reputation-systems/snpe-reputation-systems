@@ -12,7 +12,7 @@ from numpy import float64
 
 from ..snpe_reputation_systems.simulations.simulator_class import (
     BaseSimulator,
-    SingleRhoSimulator
+    SingleRhoSimulator,
 )
 
 
