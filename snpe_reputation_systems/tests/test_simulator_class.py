@@ -44,14 +44,14 @@ def get_simulator(
 
     elif simulator_type == "SingleRho":
         sim_to_yield = SingleRhoSimulator(params)
-        sim_to_yield.generate_simulation_parameters(
+        sim_to_yield.simulation_parameters = sim_to_yield.generate_simulation_parameters(
             50
         )  # 50 chosen as "num_simulations" because it is the max value allowed for n in the assitance method "_integer_and_array"
         return sim_to_yield
 
     elif simulator_type == "DoubleRho":
         sim_to_yield = DoubleRhoSimulator(params)
-        sim_to_yield.generate_simulation_parameters(
+        sim_to_yield.simulation_parameters = sim_to_yield.generate_simulation_parameters(
             50
         )  # 50 chosen as "num_simulations" because it is the max value allowed for n in the assitance method "_integer_and_array"
         return sim_to_yield
