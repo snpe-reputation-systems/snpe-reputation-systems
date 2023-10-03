@@ -53,7 +53,7 @@ def get_simulator(
 
 
 class TestBaseSimulator:
-    def __init__(self) -> None:
+    def setup_method(self) -> None:
         self.simulator_type = "Base"
 
     @settings(max_examples=10)
@@ -292,7 +292,7 @@ class TestBaseSimulator:
 
 
 class TestSingleRhoSimulator(TestBaseSimulator):
-    def __init__(self) -> None:
+    def setup_method(self) -> None:
         self.simulator_type = "SingleRho"
 
     @settings(max_examples=10)
@@ -500,7 +500,7 @@ class TestSingleRhoSimulator(TestBaseSimulator):
 
 
 class TestDoubleRhoSimulator(TestBaseSimulator):
-    def __init__(self) -> None:
+    def setup_method(self) -> None:
         self.simulator_type = "DoubleRho"
 
     @settings(max_examples=50)
