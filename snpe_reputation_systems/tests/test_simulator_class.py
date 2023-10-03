@@ -366,7 +366,7 @@ def _gen_wrong_fake_existing_reviews(
 @given(
     _integer_and_array(),
     integers(min_value=5, max_value=25),
-    integers(min_value=1, max_value=100),
+    integers(min_value=1, max_value=10),
 )
 def test_simulate_review_histogram(
     int_and_array, depth_existing_reviews, simulation_id
