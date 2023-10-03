@@ -351,6 +351,8 @@ def _gen_wrong_fake_existing_reviews(num_products: int, depth: int):
                 [2 if k == add_index else 0 for k in range(5)]
             )
 
+    return list(existing_reviews)
+
 
 @settings(max_examples=50)
 @given(
