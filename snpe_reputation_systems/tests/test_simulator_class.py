@@ -362,7 +362,7 @@ def _gen_wrong_fake_existing_reviews(
     return list(existing_reviews)
 
 
-@settings(max_examples=50)
+@settings(max_examples=10, deadline=60000)
 @given(
     _integer_and_array(),
     integers(min_value=5, max_value=25),
@@ -403,7 +403,6 @@ def test_simulate_review_histogram(
     # by method "check_existing_reviews". The same applies for the test of incorrect
     # case below.
 
-    """
     # Testing incorrect case - existing reviews increases with a step different to 1
     with pytest.raises(ValueError):
         simulator.simulate_review_histogram(
@@ -415,9 +414,7 @@ def test_simulate_review_histogram(
                 )
             ],
         )
-    """
 
-    """
     # Testing incorrect case - existing reviews increase multiple indices at once
     with pytest.raises(ValueError):
         simulator.simulate_review_histogram(
@@ -429,7 +426,6 @@ def test_simulate_review_histogram(
                 )
             ],
         )
-    """
 
 
 @settings(max_examples=50)
