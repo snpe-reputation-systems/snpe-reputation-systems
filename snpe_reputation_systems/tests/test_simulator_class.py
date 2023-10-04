@@ -21,6 +21,7 @@ from numpy import float64
 
 from ..snpe_reputation_systems.simulations.simulator_class import (
     BaseSimulator,
+    DoubleHerdingSimulator,
     DoubleRhoSimulator,
     HerdingSimulator,
     SingleRhoSimulator,
@@ -37,6 +38,7 @@ def get_simulator(
     previous_rating_measure="mean",
     min_reviews_for_herding=5,
     num_latest_reviews_for_herding=3,
+    herding_differentiating_measure="mean",
 ):
     """
     Returns a functional instance of the desired simulator class to use for the different
@@ -55,6 +57,7 @@ def get_simulator(
         "previous_rating_measure": previous_rating_measure,
         "min_reviews_for_herding": min_reviews_for_herding,
         "num_latest_reviews_for_herding": num_latest_reviews_for_herding,
+        "herding_differentiating_measure": herding_differentiating_measure,
     }
 
     if num_latest_reviews_for_herding == 0:
@@ -79,6 +82,13 @@ def get_simulator(
 
     elif simulator_type == "Herding":
         sim_to_yield = HerdingSimulator(params)
+        sim_to_yield.simulation_parameters = sim_to_yield.generate_simulation_parameters(
+            given_num_simulations
+        )  # 50 chosen as "num_simulations" because it is the max value allowed for n in the assitance method "_integer_and_array"
+        return sim_to_yield
+
+    elif simulator_type == "DoubleHerding":
+        sim_to_yield = DoubleHerdingSimulator(params)
         sim_to_yield.simulation_parameters = sim_to_yield.generate_simulation_parameters(
             given_num_simulations
         )  # 50 chosen as "num_simulations" because it is the max value allowed for n in the assitance method "_integer_and_array"
@@ -402,6 +412,10 @@ def test_simulate_review_histogram(
         _,
         _,
     ) = int_and_array
+    """
+    Testing "simulate_review_histogram" method of SingleRhoSimulator according to the former "assert" cases
+    provided for this method in simulator_class.py
+    """
 
     assume(simulation_id < given_num_simulations)
 
@@ -579,7 +593,7 @@ def test_decision_to_leave_review(
 #############################################
 
 
-@settings(max_examples=10)
+@settings(max_examples=20)
 @given(
     text(min_size=3, max_size=15),
     integers(min_value=5, max_value=10),
@@ -599,7 +613,8 @@ def test__init__herding(
     num_latest_reviews_for_herding,
 ):
     """
-    Docstring here
+    Testing "__init__" method of HerdingSimulator according to the former "assert" cases
+    provided for this method in simulator_class.py
     """
 
     assume(strings not in ["mean", "mode", "mode of latest"])
@@ -648,8 +663,52 @@ def test__init__herding(
         )
 
 
+# Test choose_herding_parameter
+
+# Test herding
+
+
 # DoubleHerdingSimulator Tests
 #############################################
 
+
+@settings(max_examples=20)
+@given(
+    text(min_size=3, max_size=15),
+    sampled_from(["mean", "mode"]),
+)
+def test__init__doubleherding(
+    strings,
+    herding_differentiating_measure,
+):
+    """
+    Testing "__init__" method of DoubleHerdingSimulator according to the former "assert" cases
+    provided for this method in simulator_class.py
+    """
+
+    assume(strings not in ["mean", "mode"])
+
+    # Test correct cases
+    assert isinstance(
+        get_simulator(
+            simulator_type="DoubleHerding",
+            herding_differentiating_measure=herding_differentiating_measure,
+        ),
+        DoubleHerdingSimulator,
+    )
+
+    # Test herding_differentiating_measure in ["mean","mode"]
+    with pytest.raises(ValueError):
+        simulator_A = get_simulator(
+            simulator_type="DoubleHerding", previous_rating_measure=strings
+        )
+
+
+# Test choose_herding_parameter
+
+
 # RatingScaleSimulator Tests
 #############################################
+
+
+# Test __init__

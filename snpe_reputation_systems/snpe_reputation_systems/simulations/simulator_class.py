@@ -554,13 +554,15 @@ class DoubleHerdingSimulator(HerdingSimulator):
     # is above a metric of existing ratings (mean or mode) and the other when it is below
     def __init__(self, params: dict):
         self.herding_differentiating_measure = params["herding_differentiating_measure"]
-        assert self.herding_differentiating_measure in [
-            "mean",
-            "mode",
-        ], f"""
-        Can only use mean/mode of the existing ratings to choose the h_p to use,
-        provided {self.herding_differentiating_measure} instead
-        """
+
+        if self.herding_differentiating_measure not in ["mean", "mode"]:
+            raise ValueError(
+                f"""
+                herding_differentiating_measure has to be one of mean or mode,
+                found {self.herding_differentiating_measure} instead
+                """
+            )
+
         super(DoubleHerdingSimulator, self).__init__(params)
 
     @classmethod
