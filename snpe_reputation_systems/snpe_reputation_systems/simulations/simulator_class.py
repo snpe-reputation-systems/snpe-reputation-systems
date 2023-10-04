@@ -388,30 +388,42 @@ class HerdingSimulator(DoubleRhoSimulator):
     def __init__(self, params: dict):
         self.previous_rating_measure = params["previous_rating_measure"]
         self.min_reviews_for_herding = params["min_reviews_for_herding"]
-        assert self.previous_rating_measure in [
-            "mean",
-            "mode",
-            "mode of latest",
-        ], f"Can only use mean/mode/mode of latest as previous rating, provided {self.previous_rating_measure} instead"
+
+        if self.previous_rating_measure not in ["mean", "mode", "mode of latest"]:
+            raise ValueError(
+                f"""
+                previous_rating_measure has to be one of mean, mode or mode of latest,
+                found {self.previous_rating_measure} instead
+                """
+            )
+
         if self.previous_rating_measure == "mode of latest":
-            assert (
-                "num_latest_reviews_for_herding" in params
-            ), """
-            Number of latest reviews to calculate mode needed if mode of latest is being used for herding
-            """
+            if "num_latest_reviews_for_herding" not in params:
+                raise ValueError(
+                    """
+                    Number of latest reviews to calculate mode needed if mode of latest is being used for herding
+                    """
+                )
+
             self.num_latest_reviews_for_herding = params[
                 "num_latest_reviews_for_herding"
             ]
-            assert (
-                self.num_latest_reviews_for_herding < self.min_reviews_for_herding
-            ), f"""
-            Minimum {self.min_reviews_for_herding} required before herding can be done, but
+
+            if self.num_latest_reviews_for_herding > self.min_reviews_for_herding:
+                raise ValueError(
+                    """Minimum {self.min_reviews_for_herding} required before herding can be done, but
             {self.num_latest_reviews_for_herding} latest reviews to be actually used for mode calculation during herding,
             so herding cannot actually be done before {self.num_latest_reviews_for_herding + 1} reviews accumulate
             """
-        assert (
-            self.min_reviews_for_herding >= 1
-        ), f"At least 1 review has to exist before herding can happen, found {self.min_reviews_for_herding} instead"
+                )
+
+        if self.min_reviews_for_herding < 1:
+            raise ValueError(
+                f"""
+                Minimum number of reviews for herding has to be at least 1, found {self.min_reviews_for_herding} instead
+                """
+            )
+
         super(HerdingSimulator, self).__init__(params)
 
     @classmethod
