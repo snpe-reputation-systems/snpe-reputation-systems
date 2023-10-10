@@ -624,11 +624,16 @@ def test_decision_to_leave_review(wrong_rho_1, wrong_rho_2, delta, simulation_id
         mock_rho.side_effect = [wrong_rho_1, wrong_rho_2]
 
         # Testing assert 1 (isinstance np.array)
-        with pytest.raises(ValueError):
+        with pytest.raises(
+            ValueError,
+            match=f"Expected np.ndarray type for rho, found {type(wrong_rho_1)} instead",
+        ):
             simulator.decision_to_leave_review(delta=delta, simulation_id=simulation_id)
 
         # Testing assert 2 (shape != 2)
-        with pytest.raises(ValueError):
+        with pytest.raises(
+            ValueError,
+        ):
             simulator.decision_to_leave_review(delta=delta, simulation_id=simulation_id)
 
 
@@ -744,7 +749,10 @@ def test_choose_herding_parameter(
         )
 
         # Testing (H_p is an integer)
-        with pytest.raises(ValueError):
+        with pytest.raises(
+            ValueError,
+            match=f"Expecting a scalar value for the herding parameter, got {wrong_hp} instead",
+        ):
             simulator.choose_herding_parameter(
                 simulation_id=simulation_id,
                 rating_index=rating_index,
