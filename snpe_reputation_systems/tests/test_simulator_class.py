@@ -18,6 +18,7 @@ from hypothesis.strategies import (
     tuples,
 )
 from numpy import float64
+from unittest.mock import patch
 
 from ..snpe_reputation_systems.simulations.simulator_class import (
     BaseSimulator,
@@ -553,11 +554,11 @@ def test_simulate_singlerho(int_and_array, depth_existing_reviews):
 
 # WIP
 
-"""
+
 @settings(max_examples=50)
 @given(
     lists(floats(), min_size=2, max_size=2),
-    arrays(dtype=np.float32, shape=integers(min_value=1)),
+    arrays(dtype=np.float32, shape=integers(min_value=1, max_value=15)),
     floats(
         min_value=0, max_value=4
     ),  # Required by the tested method but not used in practice
@@ -565,28 +566,22 @@ def test_simulate_singlerho(int_and_array, depth_existing_reviews):
         min_value=1, max_value=100
     ),  # Required by the tested method but not used in practice
 )
-def test_decision_to_leave_review(
-    mocker, wrong_rho_1, wrong_rho_2, delta, simulation_id
-):
+def test_decision_to_leave_review(wrong_rho_1, wrong_rho_2, delta, simulation_id):
     # Instantiate simulator
     simulator = get_simulator(simulator_type="DoubleRho")
 
     assume(wrong_rho_2.shape[0] != 2)
 
-    mocker.patch.object(
-        simulator,
-        "yield_simulation_param_per_visitor",
-        side_effect=[wrong_rho_1, wrong_rho_2],
-    )
+    with patch.object(simulator, "yield_simulation_param_per_visitor") as mock_rho:
+        mock_rho.side_effect = [wrong_rho_1, wrong_rho_2]
 
-    # Testing assert 1 (isinstance np.array)
-    with pytest.raises(ValueError):
-        simulator.decision_to_leave_review(delta=delta, simulation_id=simulation_id)
+        # Testing assert 1 (isinstance np.array)
+        with pytest.raises(ValueError):
+            simulator.decision_to_leave_review(delta=delta, simulation_id=simulation_id)
 
-    # Testing assert 2 (shape != 2)
-    with pytest.raises(ValueError):
-        simulator.decision_to_leave_review(delta=delta, simulation_id=simulation_id)
-"""
+        # Testing assert 2 (shape != 2)
+        with pytest.raises(ValueError):
+            simulator.decision_to_leave_review(delta=delta, simulation_id=simulation_id)
 
 
 # HerdingSimulator Tests
