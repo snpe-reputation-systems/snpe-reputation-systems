@@ -184,11 +184,17 @@ def test_convolve_prior_with_existing_reviews(array_not5, array_int5, empty_arr)
     assert isinstance(result, np.ndarray)
 
     # Testing incorrect cases (1)
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError,
+        match="Prior and simulated distributions of reviews should have the same shape",
+    ):
         simulator.convolve_prior_with_existing_reviews(array_not5)
 
     # Testing  incorrect cases (2)
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError,
+        match="Prior and simulated distributions of reviews should have the same shape",
+    ):
         simulator.convolve_prior_with_existing_reviews(empty_arr)
 
 
@@ -270,7 +276,10 @@ def test_simulate_base(int_and_array, depth_existing_reviews):
     # If existing_reviews is not None:
 
     ## Expect ValueError if simulation_parameters is None
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError,
+        match="Existing reviews for products supplied, but no simulation parameters given",
+    ):
         simulator.simulate(
             num_simulations=given_num_simulations,
             existing_reviews=_gen_fake_existing_reviews(
@@ -279,7 +288,11 @@ def test_simulate_base(int_and_array, depth_existing_reviews):
         )
 
         ## Expect ValueError if num_reviews_per_simulation is None
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError,
+        match="""Existing reviews for products supplied,but num_reviews_per_simulation not given. This gives the number of
+                    TOTAL reviews per product desired""",
+    ):
         simulator.simulate(
             num_simulations=given_num_simulations,
             existing_reviews=_gen_fake_existing_reviews(
@@ -294,14 +307,22 @@ def test_simulate_base(int_and_array, depth_existing_reviews):
     # If num_reviews_per_simulation exists:
 
     ## Expect ValueError if len(num_reviews_per_simulation) != num_simulations
-    with pytest.raises(ValueError):  # Case 1: existing_reviesw == None
+    with pytest.raises(
+        ValueError,
+        match=f"{given_num_simulations_2} simulations to be done, "
+        f"but {len(given_num_reviews_per_simulation)} review counts per simulation provided",
+    ):  # Case 1: existing_reviesw == None
         simulator.simulate(
             num_simulations=given_num_simulations_2,
             simulation_parameters={},
             num_reviews_per_simulation=given_num_reviews_per_simulation,
         )
 
-    with pytest.raises(ValueError):  # Case 2: existing_reviews != None
+    with pytest.raises(
+        ValueError,
+        match=f"{given_num_simulations_2} simulations to be done, "
+        f"but {len(given_num_reviews_per_simulation)} review counts per simulation provided",
+    ):  # Case 2: existing_reviews != None
         simulator.simulate(
             num_simulations=given_num_simulations,
             existing_reviews=_gen_fake_existing_reviews(

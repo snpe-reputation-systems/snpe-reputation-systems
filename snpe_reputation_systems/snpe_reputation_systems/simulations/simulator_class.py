@@ -80,8 +80,8 @@ class BaseSimulator:
                 )
             if num_reviews_per_simulation is None:
                 raise ValueError(
-                    "Existing reviews for products supplied,but num_reviews_per_simulation not given. This gives the number of"
-                    "TOTAL reviews per product desired"
+                    """Existing reviews for products supplied,but num_reviews_per_simulation not given. This gives the number of
+                    TOTAL reviews per product desired"""
                 )
             existing_reviews = check_existing_reviews(existing_reviews)
             num_simulations = len(existing_reviews)
@@ -471,9 +471,12 @@ class HerdingSimulator(DoubleRhoSimulator):
         self, rating_index: int, simulated_reviews: Deque, simulation_id: int
     ) -> float:
         h_p = self.yield_simulation_param_per_visitor(simulation_id, "h_p")
-        assert isinstance(
-            h_p, float
-        ), f"Expecting a scalar value for the herding parameter, got {h_p} instead"
+
+        if not isinstance(h_p, float):
+            raise ValueError(
+                f"Expecting a scalar value for the herding parameter, got {h_p} instead"
+            )
+
         return h_p
 
     def herding(
