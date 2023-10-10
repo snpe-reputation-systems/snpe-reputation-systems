@@ -378,11 +378,20 @@ def test_mismatch_calculator(
     )
 
     # out-of-range experience test
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError,
+        # match=f"User's experience should be a whole number in [1, 5], got {wrong_experience} instead",
+    ):
         simulator.mismatch_calculator(wrong_experience, expected_experience)
 
     # out-of-range expected experience test
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError,
+        # match=f"""
+        #        Mean of user's expected distribution of experiences should be a float in [1, 5],
+        #        got {wrong_expected_experience} instead
+        #        """,
+    ):
         simulator.mismatch_calculator(experience, wrong_expected_experience)
 
 
@@ -466,7 +475,10 @@ def test_simulate_review_histogram(
     # case below.
 
     # Testing incorrect case - existing reviews increases with a step different to 1
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError,
+        # match="""Please check the histograms provided in the array of existing reviews. These should be in the form of cumulative histograms and should only add 1 rating at a time.""",
+    ):
         simulator.simulate_review_histogram(
             simulation_id=simulation_id,
             existing_reviews=[
@@ -478,7 +490,10 @@ def test_simulate_review_histogram(
         )
 
     # Testing incorrect case - existing reviews increase multiple indices at once
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError,
+        # match="""Please check the histograms provided in the array of existing reviews. These should be in the form of cumulative histograms and should only add 1 rating at a time.""",
+    ):
         simulator.simulate_review_histogram(
             simulation_id=simulation_id,
             existing_reviews=[
@@ -513,7 +528,10 @@ def test_simulate_singlerho(int_and_array, depth_existing_reviews):
     # If existing_reviews is not None:
 
     ## Expect ValueError if simulation_parameters is None
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError,
+        match="Existing reviews for products supplied, but no simulation parameters given",
+    ):
         simulator.simulate(
             num_simulations=given_num_simulations,
             existing_reviews=_gen_fake_existing_reviews(
@@ -522,7 +540,11 @@ def test_simulate_singlerho(int_and_array, depth_existing_reviews):
         )
 
         ## Expect ValueError if num_reviews_per_simulation is None
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError,
+        match="""Existing reviews for products supplied,but num_reviews_per_simulation not given. This gives the number of
+                    TOTAL reviews per product desired""",
+    ):
         simulator.simulate(
             num_simulations=given_num_simulations,
             existing_reviews=_gen_fake_existing_reviews(
@@ -537,14 +559,22 @@ def test_simulate_singlerho(int_and_array, depth_existing_reviews):
     # If num_reviews_per_simulation exists:
 
     ## Expect ValueError if len(num_reviews_per_simulation) != num_simulations
-    with pytest.raises(ValueError):  # Case 1: existing_reviesw == None
+    with pytest.raises(
+        ValueError,
+        match=f"{given_num_simulations_2} simulations to be done, "
+        f"but {len(given_num_reviews_per_simulation)} review counts per simulation provided",
+    ):  # Case 1: existing_reviesw == None
         simulator.simulate(
             num_simulations=given_num_simulations_2,
             simulation_parameters={},
             num_reviews_per_simulation=given_num_reviews_per_simulation,
         )
 
-    with pytest.raises(ValueError):  # Case 2: existing_reviews != None
+    with pytest.raises(
+        ValueError,
+        match=f"{given_num_simulations_2} simulations to be done, "
+        f"but {len(given_num_reviews_per_simulation)} review counts per simulation provided",
+    ):  # Case 2: existing_reviews != None
         simulator.simulate(
             num_simulations=given_num_simulations,
             existing_reviews=_gen_fake_existing_reviews(
@@ -680,6 +710,50 @@ def test__init__herding(
 
 
 # Test choose_herding_parameter
+
+
+@given(
+    floats(min_value=1, max_value=4),
+    integers(min_value=1, max_value=4),
+    integers(
+        min_value=1, max_value=100
+    ),  # Required by the tested method but not used in practice
+    lists(integers()).map(
+        Deque
+    ),  # Required by the tested method but not used in practice
+    integers(
+        min_value=0, max_value=4
+    ),  # Required by the tested method but not used in practice
+)
+def test_choose_herding_parameter(
+    right_hp, wrong_hp, simulation_id, simulated_reviews, rating_index
+):
+    """
+    Testing "choose_herding_parameter" method of HerdingSimulator according to the former "assert" cases
+    provided for this method in simulator_class.py
+    """
+
+    # Instantiate simulator
+    simulator = get_simulator(simulator_type="Herding")
+
+    with patch.object(simulator, "yield_simulation_param_per_visitor") as mock_hp:
+        mock_hp.side_effect = [right_hp, wrong_hp]
+
+        # Testing correct case (No errors returned - H_p is float)
+        simulator.choose_herding_parameter(
+            simulation_id=simulation_id,
+            rating_index=rating_index,
+            simulated_reviews=simulated_reviews,
+        )
+
+        # Testing (H_p is an integer)
+        with pytest.raises(ValueError):
+            simulator.choose_herding_parameter(
+                simulation_id=simulation_id,
+                rating_index=rating_index,
+                simulated_reviews=simulated_reviews,
+            )
+
 
 # Test herding
 
