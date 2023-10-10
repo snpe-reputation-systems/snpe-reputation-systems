@@ -486,21 +486,33 @@ class HerdingSimulator(DoubleRhoSimulator):
         simulation_id: int,
         use_h_u: bool = False,
     ) -> int:
-        assert (
+        if (
             np.sum(simulated_reviews[-1]) - np.sum(simulated_reviews[0])
-            >= self.min_reviews_for_herding
-        ), f"""
-        Minimum {self.min_reviews_for_herding} reviews need to have been obtained for herding to happen,
-        found only {np.sum(simulated_reviews[-1]) - np.sum(simulated_reviews[0])} instead
-        """
-        # Check that the whole timeseries of simulated_reviews has been supplied
-        if len(simulated_reviews) == 1:
-            np.testing.assert_array_equal(simulated_reviews[0], np.ones(5))
-        else:
-            np.testing.assert_array_equal(
-                np.array([review.shape[0] for review in simulated_reviews]),
-                5 * np.ones(len(simulated_reviews)),
+            < self.min_reviews_for_herding
+        ):
+            raise ValueError(
+                f"""
+                Minimum {self.min_reviews_for_herding} reviews need to have been obtained for herding to happen,
+                found only {np.sum(simulated_reviews[-1]) - np.sum(simulated_reviews[0])} instead
+                """
             )
+
+        # Check that the whole timeseries of simulated_reviews has been supplied
+        # if len(simulated_reviews) == 1:
+        #    if not np.array_equal(simulated_reviews[0], np.ones(5)):
+        #        raise ValueError("Error message B")
+        #
+        # else: #(if statement below this blinded section of the code)
+        #
+        #
+        # Note from Diego: Have not found a clar approach on how to test this condition given the previous condition thus it has been temporarily #ed
+
+        if not np.array_equal(
+            np.array([review.shape[0] for review in simulated_reviews]),
+            5 * np.ones(len(simulated_reviews)),
+        ):
+            raise ValueError("Error message for test case 2")
+
         # Pull out the herding parameter which will be used in this simulation
         # This step is trivial when using a single herding h_p, but becomes important when using 2
         h_p = self.choose_herding_parameter(
@@ -541,9 +553,13 @@ class HerdingSimulator(DoubleRhoSimulator):
             # was an instance of float at the start of this method, but can't use
             # isinstance(previous_rating_index, (float, int)) here.
             # Check: https://numpy.org/doc/stable/reference/arrays.scalars.html
-            assert np.issubdtype(
-                previous_rating_index, np.number
-            ), f"Previous rating index should be a number, found {type(previous_rating_index)} instead"
+            if not np.issubdtype(previous_rating_index, np.number):
+                raise ValueError(
+                    f"""
+                    Previous rating index should be a number, found {type(previous_rating_index)} instead
+                    """
+                )  # Note from Diego: Have not found a clar approach on how to test this condition given the previous condition thus it has been temporarily #ed
+
             # Return the average of the currently calculated rating and the previous rating measure
             # Convert to integer because this is used to index the rating histogram
             return int((rating_index + previous_rating_index) / 2)

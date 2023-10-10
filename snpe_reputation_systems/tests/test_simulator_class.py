@@ -603,9 +603,6 @@ def test_simulate_singlerho(int_and_array, depth_existing_reviews):
 #############################################
 
 
-# WIP
-
-
 @settings(max_examples=50)
 @given(
     lists(floats(), min_size=2, max_size=2),
@@ -755,7 +752,123 @@ def test_choose_herding_parameter(
             )
 
 
-# Test herding
+def _deform_simulated_reviews(
+    simulated_reviews: Deque, value_range=(1, 25), num_values_to_add=(1, 5)
+):
+    """
+    Assistant function for "test_herding" method, deforms the shape of a series
+    of simulated reviews so these do not comply with the condition established
+    by the methods' third check regarding simulated_review's shape. The shape of
+    hald of the arrays in the deque get "deformed" by adding random values to them.
+
+    - simulated_reviews: The original deque containing NumPy arrays.
+    - value_range: Range of random values to add.
+    - num_values_to_add: Range of how many random values to add.
+
+    """
+
+    deformed_deque = simulated_reviews.copy()
+    for idx in range(1, len(deformed_deque)):
+        # Decide whether to modify this array
+        if np.random.rand() < 0.5:
+            # Decide how many random values to add
+            n_new_values = np.random.randint(num_values_to_add[0], num_values_to_add[1])
+            new_values = np.random.randint(
+                value_range[0], value_range[1], size=n_new_values
+            )
+            deformed_deque[idx] = np.append(deformed_deque[idx], new_values)
+
+    return deformed_deque
+
+
+@given(
+    integers(min_value=0, max_value=4),  # rating index
+    integers(min_value=3, max_value=10),  # depth sim reviews
+    integers(min_value=1, max_value=100),  # simulation id
+    integers(min_value=1, max_value=16),  # low_min_reviews_for_herding
+    integers(min_value=1, max_value=8),  # min_reviews_for_herding
+    integers(min_value=0, max_value=4),
+    # use_h_u: bool
+)
+def test_herding(
+    rating_index,
+    depth_sim_reviews,
+    simulation_id,
+    low_min_reviews_for_herding,
+    min_reviews_for_herding,
+    given_hp
+):
+    """
+    Testing "herding" method of HerdingSimulator according to the former "assert" cases
+    provided for this method in simulator_class.py
+    """
+
+    low_simulated_reviews = Deque(
+        [
+            np.array(row)
+            for row in _gen_fake_existing_reviews(1, depth=depth_sim_reviews)[0]
+        ]
+    )  # generate review history in the form of a deque
+
+    assume(low_min_reviews_for_herding > depth_sim_reviews)
+    assume(min_reviews_for_herding < depth_sim_reviews)
+
+    simulated_reviews = Deque(
+        [
+            np.array(row)
+            for row in _gen_fake_existing_reviews(1, depth=depth_sim_reviews)[0]
+        ]
+    )  # generate review history in the form of a deque
+
+    # Test whether there are enough reviews to perform herding
+    simulator_A = get_simulator(
+        simulator_type="Herding",
+        min_reviews_for_herding=low_min_reviews_for_herding,
+    )
+
+    with pytest.raises(
+        ValueError,
+        match=f"""
+                Minimum {simulator_A.min_reviews_for_herding} reviews need to have been obtained for herding to happen,
+                found only {np.sum(low_simulated_reviews[-1]) - np.sum(low_simulated_reviews[0])} instead
+                """,
+    ):
+        simulator_A.herding(
+            rating_index=rating_index,
+            simulated_reviews=low_simulated_reviews,
+            simulation_id=simulation_id,
+        )
+
+    # Test whether timeseries shape is the appropriate
+    simulator_B = get_simulator(
+        simulator_type="Herding",
+        min_reviews_for_herding=min_reviews_for_herding,
+    )
+
+    with pytest.raises(ValueError, match="Error message for test case 2"):
+        simulator_B.herding(
+            rating_index=rating_index,
+            simulated_reviews=_deform_simulated_reviews(simulated_reviews),
+            simulation_id=simulation_id,
+        )
+
+    # Test whether ... 
+
+    simulator_C = get_simulator(
+        simulator_type="Herding",
+        min_reviews_for_herding=min_reviews_for_herding,
+    )
+
+    with patch.object(simulator_C, "choose_herding_parameter") as mock_hp:
+        mock_hp.return_value = given_hp
+
+        with pytest.raises(ValueError):
+            simulator_C.herding(
+                rating_index=rating_index,
+                simulated_reviews=simulated_reviews,
+                simulation_id=simulation_id,
+                use_h_u=False,
+            )
 
 
 # DoubleHerdingSimulator Tests
