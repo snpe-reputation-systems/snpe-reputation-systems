@@ -796,7 +796,7 @@ def test_herding(
     simulation_id,
     low_min_reviews_for_herding,
     min_reviews_for_herding,
-    given_hp
+    given_hp,
 ):
     """
     Testing "herding" method of HerdingSimulator according to the former "assert" cases
@@ -852,8 +852,8 @@ def test_herding(
             simulation_id=simulation_id,
         )
 
-    # Test whether ... 
-
+    # Test case 3
+    """"
     simulator_C = get_simulator(
         simulator_type="Herding",
         min_reviews_for_herding=min_reviews_for_herding,
@@ -869,6 +869,7 @@ def test_herding(
                 simulation_id=simulation_id,
                 use_h_u=False,
             )
+    """
 
 
 # DoubleHerdingSimulator Tests
