@@ -1,4 +1,5 @@
 from typing import Deque, List, Optional, Union
+from unittest.mock import patch
 
 import hypothesis
 import numpy as np
@@ -18,7 +19,6 @@ from hypothesis.strategies import (
     tuples,
 )
 from numpy import float64
-from unittest.mock import patch
 
 from ..snpe_reputation_systems.simulations.simulator_class import (
     BaseSimulator,
