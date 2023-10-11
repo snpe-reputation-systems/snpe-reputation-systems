@@ -25,6 +25,7 @@ from ..snpe_reputation_systems.simulations.simulator_class import (
     DoubleHerdingSimulator,
     DoubleRhoSimulator,
     HerdingSimulator,
+    RatingScaleSimulator,
     SingleRhoSimulator,
 )
 from ..snpe_reputation_systems.utils.functions import check_simulation_parameters
@@ -40,6 +41,9 @@ def get_simulator(
     min_reviews_for_herding=5,
     num_latest_reviews_for_herding=3,
     herding_differentiating_measure="mean",
+    five_star_highest_limit=3,
+    one_star_lowest_limit=-3,
+    max_bias_5_star=0.5,
 ):
     """
     Returns a functional instance of the desired simulator class to use for the different
@@ -59,6 +63,9 @@ def get_simulator(
         "min_reviews_for_herding": min_reviews_for_herding,
         "num_latest_reviews_for_herding": num_latest_reviews_for_herding,
         "herding_differentiating_measure": herding_differentiating_measure,
+        "five_star_highest_limit": five_star_highest_limit,
+        "one_star_lowest_limit": one_star_lowest_limit,
+        "max_bias_5_star": max_bias_5_star,
     }
 
     if num_latest_reviews_for_herding == 0:
@@ -93,6 +100,13 @@ def get_simulator(
         sim_to_yield.simulation_parameters = sim_to_yield.generate_simulation_parameters(
             given_num_simulations
         )  # 50 chosen as "num_simulations" because it is the max value allowed for n in the assitance method "_integer_and_array"
+        return sim_to_yield
+
+    elif simulator_type == "RatingScale":
+        sim_to_yield = RatingScaleSimulator(params)
+        sim_to_yield.simulation_parameters = (
+            sim_to_yield.generate_simulation_parameters(given_num_simulations)
+        )
         return sim_to_yield
 
 
@@ -923,4 +937,59 @@ def test__init__doubleherding(
 #############################################
 
 
-# Test __init__
+@given(
+    floats(min_value=0.01, max_value=3.99),
+    floats(min_value=-3.99, max_value=-0.01),
+    floats(min_value=0, max_value=1),
+    floats(min_value=-20, max_value=20),
+    floats(min_value=-20, max_value=20),
+    floats(min_value=-20, max_value=20),
+)
+def test__init__ratingscale(
+    five_star_highest_limit,
+    one_star_lowest_limit,
+    max_bias_5_star,
+    wrong_five_star_highest_limit,
+    wrong_one_star_lowest_limit,
+    wrong_max_bias_5_star,
+):
+    """
+    Testing "__init__" method of RatingScaleSimulator according to the former "assert" cases
+    provided for this method in simulator_class.py
+    """
+
+    assume(not (0 <= wrong_five_star_highest_limit <= 4))
+    assume(not (-4 <= wrong_one_star_lowest_limit <= 0))
+    assume(not (0 <= wrong_max_bias_5_star <= 1))
+
+    # Test correct cases
+    assert isinstance(
+        get_simulator(
+            simulator_type="RatingScale",
+            five_star_highest_limit=five_star_highest_limit,
+            one_star_lowest_limit=one_star_lowest_limit,
+            max_bias_5_star=max_bias_5_star,
+        ),
+        RatingScaleSimulator,
+    )
+
+    # Test five_star_highest_limit not in expected range
+    with pytest.raises(ValueError):
+        simulator_A = get_simulator(
+            simulator_type="RatingScale",
+            five_star_highest_limit=wrong_five_star_highest_limit,
+        )
+
+    # Test one_star_lowest_limit not in expected range
+    with pytest.raises(ValueError):
+        simulator_B = get_simulator(
+            simulator_type="RatingScale",
+            one_star_lowest_limit=wrong_one_star_lowest_limit,
+        )
+
+    # Test max_bias_5_star not in expected range
+    with pytest.raises(ValueError):
+        simulator_C = get_simulator(
+            simulator_type="RatingScale",
+            max_bias_5_star=wrong_max_bias_5_star,
+        )

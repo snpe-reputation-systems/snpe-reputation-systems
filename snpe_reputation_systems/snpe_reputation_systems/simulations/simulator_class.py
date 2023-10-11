@@ -652,27 +652,36 @@ class RatingScaleSimulator(HerdingSimulator):
         # The actual limit of 1 star ratings will lie between one_star_lowest_limit and 0.5*one_star_lowest_limit
         self.one_star_lowest_limit = params["one_star_lowest_limit"]
         # Limit of 5 star ratings should be positive, and vice-versa for 1 star ratings
-        assert (
+        if not (
             self.five_star_highest_limit > 0.0 and self.five_star_highest_limit < 4.0
-        ), f"""
-        The highest limit of delta for 5 star ratings should be positive and less than 4,
-        found {self.five_star_highest_limit}
-        """
-        assert (
-            self.one_star_lowest_limit < 0.0 and self.one_star_lowest_limit > -4.0
-        ), f"""
-        The lowest limit of delta for 1 star ratings should be negative and more than -4,
-        found {self.one_star_lowest_limit}
-        """
+        ):
+            raise ValueError(
+                f"""
+            The highest limit of delta for 5 star ratings should be positive and less than 4,
+            found {self.five_star_highest_limit}
+            """
+            )
+
+        if not (self.one_star_lowest_limit < 0.0 and self.one_star_lowest_limit > -4.0):
+            raise ValueError(
+                f"""
+            The lowest limit of delta for 1 star ratings should be negative and more than -4,
+            found {self.one_star_lowest_limit}
+            """
+            )
+
         # We also need to supply the max probability of 5 star bias across all simulated products
         # Based on this probability, a visitor leaves a 5 star rating irrespective of their experience, +ive or -ive
+
         self.max_bias_5_star = params["max_bias_5_star"]
-        assert (
-            self.max_bias_5_star >= 0 and self.max_bias_5_star <= 1
-        ), f"""
-        The max 5 star bias across all simulated products is a maximum probability value. So it should be
-        between 0 and 1, but found {self.max_bias_5_star} instead
-        """
+        if not (self.max_bias_5_star >= 0 and self.max_bias_5_star <= 1):
+            raise ValueError(
+                f"""
+            The max 5 star bias across all simulated products is a maximum probability value. So it should be
+            between 0 and 1, but found {self.max_bias_5_star} instead
+            """
+            )
+
         super(RatingScaleSimulator, self).__init__(params)
 
     @classmethod
