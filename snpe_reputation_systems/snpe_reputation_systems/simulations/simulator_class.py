@@ -609,12 +609,14 @@ class DoubleHerdingSimulator(HerdingSimulator):
         # Pull out the (2 valued) h_p corresponding to this simulation id
         h_p = self.yield_simulation_param_per_visitor(simulation_id, "h_p")
         # Confirm that h_p is 2-dimensional array
-        assert isinstance(
-            h_p, np.ndarray
-        ), f"Expected np.ndarray type for h_p, found {type(h_p)} instead"
-        assert h_p.shape == (
-            2,
-        ), f"Expecting shape (2,) for h_p, got {h_p.shape} instead"
+        if not isinstance(h_p, np.ndarray):
+            raise ValueError(
+                f"Expected np.ndarray type for h_p, found {type(h_p)} instead"
+            )
+
+        if h_p.shape != (2,):
+            raise ValueError(f"Expecting shape (2,) for h_p, got {h_p.shape} instead")
+
         # Pick which h_p to use based on the rating_index that the visitor picked
         # If it is greater than the mean/mode of existing ratings, pick h_p[1], else pick h_p[0]
         if self.herding_differentiating_measure == "mean":

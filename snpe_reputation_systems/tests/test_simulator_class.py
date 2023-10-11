@@ -741,7 +741,7 @@ def test__init__herding(
         min_value=0, max_value=4
     ),  # Required by the tested method but not used in practice
 )
-def test_choose_herding_parameter(
+def test_choose_herding_parameter_singleherding(
     right_hp, wrong_hp, simulation_id, simulated_reviews, rating_index
 ):
     """
@@ -930,7 +930,131 @@ def test__init__doubleherding(
         )
 
 
-# Test choose_herding_parameter
+@given(
+    floats(min_value=1, max_value=4),
+    arrays(
+        int,
+        shape=tuples(integers(3, 10)),
+        elements=integers(min_value=0, max_value=50),
+    ),
+    integers(
+        min_value=1, max_value=100
+    ),  # Required by the tested method but not used in practice
+    integers(
+        min_value=0, max_value=4
+    ),  # Required by the tested method but not used in practice
+    text(min_size=3, max_size=15),
+    integers(min_value=1, max_value=10),
+)
+def test_choose_herding_parameter_doubleherding(
+    non_array_hp,
+    wrong_shape_hp,
+    simulation_id,
+    rating_index,
+    wrong_herding_differentiating_measure,
+    depth_sim_reviews,
+):
+    """
+    Testing "choose_herding_parameter" method of DoubleHerdingSimulator according to the former "assert" cases
+    provided for this method in simulator_class.py
+    """
+    # Test correct case [MISSING]
+
+    simulator_A = get_simulator(
+        simulator_type="DoubleHerding",
+    )
+
+    with patch.object(simulator_A, "yield_simulation_param_per_visitor") as mock_hp:
+        mock_hp.return_value = np.array([1, 2])
+
+        simulator_A.choose_herding_parameter(
+            simulation_id=simulation_id,
+            rating_index=rating_index,
+            simulated_reviews=Deque(
+                [
+                    np.array(row)
+                    for row in _gen_fake_existing_reviews(1, depth=depth_sim_reviews)[0]
+                ]
+            ),
+        )
+
+    # Instantiate simulator
+    simulator_B = get_simulator(
+        simulator_type="DoubleHerding",
+    )
+
+    assume(
+        wrong_herding_differentiating_measure not in ["mean", "mode", "mode of latest"]
+    )
+
+    with patch.object(simulator_B, "yield_simulation_param_per_visitor") as mock_hp:
+        mock_hp.side_effect = [non_array_hp, wrong_shape_hp, np.array([1, 2])]
+
+        # Testing (H_p is np.array)
+        with pytest.raises(
+            ValueError,
+            match=f"Expected np.ndarray type for h_p, found {type(non_array_hp)} instead",
+        ):
+            simulator_B.choose_herding_parameter(
+                simulation_id=simulation_id,
+                rating_index=rating_index,
+                simulated_reviews=Deque(
+                    [
+                        np.array(row)
+                        for row in _gen_fake_existing_reviews(
+                            1, depth=depth_sim_reviews
+                        )[0]
+                    ]
+                ),
+            )
+
+        # Testing (H_p has shape (2,)
+        with pytest.raises(
+            ValueError,
+        ):
+            simulator_B.choose_herding_parameter(
+                simulation_id=simulation_id,
+                rating_index=rating_index,
+                simulated_reviews=Deque(
+                    [
+                        np.array(row)
+                        for row in _gen_fake_existing_reviews(
+                            1, depth=depth_sim_reviews
+                        )[0]
+                    ]
+                ),
+            )
+
+        # Temporarily discarded: Test segment below not responding (nor error nor pass)
+        # And an identical condition is tested in DoubleHerdingSimulator's __init__ method
+        # Test herding_differentiating_measure in ["mean","mode"]
+        # Main conditions of the method are tested above succesfully
+
+        """ 
+        # Test herding diferentiating meassure
+        with pytest.raises(
+            ValueError,
+            match=f'''
+                herding_differentiating_measure has to be one of mean or mode,
+                found {wrong_herding_differentiating_measure} instead
+                ''',
+        ):
+            simulator.herding_differentiating_measure = (
+                wrong_herding_differentiating_measure
+            )
+            simulator.choose_herding_parameter(
+                simulation_id=simulation_id,
+                rating_index=rating_index,
+                simulated_reviews=Deque(
+                    [
+                        np.array(row)
+                        for row in _gen_fake_existing_reviews(
+                            1, depth=depth_sim_reviews
+                        )[0]
+                    ]
+                ),
+            )
+            """
 
 
 # RatingScaleSimulator Tests
