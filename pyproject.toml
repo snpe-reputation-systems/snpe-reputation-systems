@@ -3,6 +3,8 @@ name = "snpe_reputation_systems"
 version = "0.0.1"
 description = "Dynamic Structural Modeling and Approximate Bayesian Inference of Online Reputation System"
 authors = ["Shrabastee Banerjee", "Narendra Mukherjee", "M. Amin Rahimian", "Diego Sanchez", "Fernando Iscar"]
+license = "MIT"
+repository = "https://github.com/snpe-reputation-systems/snpe-reputation-systems"
 
 [tool.poetry.dependencies]
 python = "3.9.16"
@@ -19,9 +21,10 @@ torchvision = { url = "https://download.pytorch.org/whl/cu116/torchvision-0.13.0
 torchaudio =  { url = "https://download.pytorch.org/whl/cu116/torchaudio-0.12.0%2Bcu116-cp39-cp39-linux_x86_64.whl" }
 
 [tool.poetry.dev-dependencies]
-pytest = "^7.1.2"
+pytest = "^7.1.1"
+hypothesis = "^6.81.2"
 
 [build-system] 
-requires = ["poetry-core"]
+requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
