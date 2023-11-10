@@ -5,6 +5,10 @@ description = "Dynamic Structural Modeling and Approximate Bayesian Inference of
 authors = ["Shrabastee Banerjee", "Narendra Mukherjee", "M. Amin Rahimian", "Diego Sanchez", "Fernando Iscar"]
 license = "MIT"
 repository = "https://github.com/snpe-reputation-systems/snpe-reputation-systems"
+readme = "README.md"
+keywords = ["reputation", "systems", "marketplace", "simulation"]
+packages = [{ include = "snpe_reputation_systems", format = "wheel" }]
+
 
 [tool.poetry.dependencies]
 python = "3.9.16"
