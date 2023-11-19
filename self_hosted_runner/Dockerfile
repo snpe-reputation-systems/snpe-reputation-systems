@@ -3,6 +3,8 @@ FROM continuumio/miniconda3
 ARG POETRY_VERSION=1.2.0 
 ENV POETRY_VERSION=$POETRY_VERSION
 
+RUN conda install -y python=3.9.16
+
 RUN mkdir actions-runner; cd actions-runner && \
     apt-get update && apt-get install -y curl
 
