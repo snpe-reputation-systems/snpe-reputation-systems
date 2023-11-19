@@ -19,8 +19,8 @@ RUN curl -O -L https://github.com/actions/runner/releases/download/v2.304.0/acti
 
 USER runneruser
 
-RUN  ./config.sh --url <REPO_URL> --token <TOKEN> --work --unattended --replace --name <RUNNER_NAME> --labels <LABELS_HERE>
-
+ARG RUNNER_TOKEN
+RUN  ./config.sh --url https://github.com/snpe-reputation-systems/snpe-reputation-systems --token $RUNNER_TOKEN --work --unattended --replace --name self-hosted --labels format-test-pack-runner
 USER root
 
 RUN conda install pytorch torchvision torchaudio -c pytorch && \
