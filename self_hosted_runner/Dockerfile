@@ -1,6 +1,6 @@
 FROM continuumio/miniconda3
 
-ARG POETRY_VERSION=1.0.0 
+ARG POETRY_VERSION=1.2.0 
 ENV POETRY_VERSION=$POETRY_VERSION
 
 RUN mkdir actions-runner; cd actions-runner && \
