@@ -22,7 +22,7 @@ pyreadr = "^0.4.6"
 mypy = "^1.0.0"
 # to test the package locally
 torch = "^1.12.0"
-torchvision = "^0.13.0"
+torchvision = "^0.16.0"
 torchaudio = "^2.1.1"
 # to test the package in github actions
 # torch = { url = "https://download.pytorch.org/whl/cu116/torch-1.12.0%2Bcu116-cp39-cp39-linux_x86_64.whl"}
