@@ -24,9 +24,9 @@ packages = [{ include = "snpe_reputation_systems", format = "wheel" }]
 # torchvision = "^0.16.0"
 # torchaudio = "^2.1.1"
 
-# deps for docker experiments:
+# automatic management:
 python = "^3.9"
-numpy = "1.23.1"
+numpy = "1.23.1" # newest versions may be problematic
 sbi = "*"
 hyperopt = "*"
 mlflow = "*"
