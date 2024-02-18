@@ -11,3 +11,15 @@ ignore.py/
 # Local text file for notes
 ignore.md
 ignore.md/
+
+# Pycache
+__pycache__
+__pycache__/
+
+# .VSCode
+.vscode
+.vscode/
+
+#.hypothesis
+.hypothesis
+.hypothesis/

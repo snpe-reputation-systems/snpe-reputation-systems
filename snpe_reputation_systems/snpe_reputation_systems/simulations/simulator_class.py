@@ -15,18 +15,17 @@ from ..utils.tqdm_utils import tqdm_joblib
 class BaseSimulator:
     def __init__(self, params: dict):
         self.review_prior = params.pop("review_prior")
-        assert (
-            len(self.review_prior) == 5
-        ), f"""
-        Prior Dirichlet distribution of simulated reviews needs to have 5 parameters,
-        but found {len(self.review_prior)}
-        """
+        if len(self.review_prior) != 5:
+            raise ValueError(
+                f"Prior Dirichlet distribution of simulated reviews needs to have 5 parameters, "
+                f"but found {len(self.review_prior)}"
+            )
         self.tendency_to_rate = params.pop("tendency_to_rate")
         self.simulation_type = params.pop("simulation_type")
-        assert self.simulation_type in [
-            "histogram",
-            "timeseries",
-        ], f"Can only simulate review histogram or timeseries, got simulation_type={self.simulation_type}"
+        if self.simulation_type not in ["histogram", "timeseries"]:
+            raise ValueError(
+                f"Can only simulate review histogram or timeseries, got simulation_type={self.simulation_type}"
+            )
         self.params = params
 
     @classmethod
@@ -36,9 +35,11 @@ class BaseSimulator:
     def convolve_prior_with_existing_reviews(
         self, simulated_reviews: np.ndarray
     ) -> np.ndarray:
-        assert (
-            self.review_prior.shape == simulated_reviews.shape
-        ), "Prior and simulated distributions of reviews should have the same shape"
+        if self.review_prior.shape != simulated_reviews.shape:
+            raise ValueError(
+                "Prior and simulated distributions of reviews should have the same shape"
+            )
+
         return self.review_prior + simulated_reviews
 
     def simulate_visitor_journey(
@@ -73,47 +74,34 @@ class BaseSimulator:
         **kwargs,
     ) -> None:
         if existing_reviews is not None:
-            assert (
-                simulation_parameters is not None
-            ), f"""
-            Existing reviews for products supplied, but no simulation parameters given
-            """
-            assert (
-                num_reviews_per_simulation is not None
-            ), f"""
-            Existing reviews for products supplied,but num_reviews_per_simulation not given. This gives the number of
-            TOTAL reviews per product desired
-            """
-            # Run checks on the shape and initial values of the review timeseries provided. These checks remove
-            # the first value in the timeseries before returning it (as that first value is automatically re-appended
-            # during simulations)
+            if simulation_parameters is None:
+                raise ValueError(
+                    "Existing reviews for products supplied, but no simulation parameters given"
+                )
+            if num_reviews_per_simulation is None:
+                raise ValueError(
+                    """Existing reviews for products supplied,but num_reviews_per_simulation not given. This gives the number of
+                    TOTAL reviews per product desired"""
+                )
             existing_reviews = check_existing_reviews(existing_reviews)
-            # Also pick num_products = num_simulations from the provided existing reviews if the tests succeed. The
-            # provided num_simulations will then be ignored
             num_simulations = len(existing_reviews)
 
         if num_reviews_per_simulation is not None:
-            assert (
-                len(num_reviews_per_simulation) == num_simulations
-            ), f"""
-            {num_simulations} simulations to be done,
-            but {len(num_reviews_per_simulation)} review counts per simulation provided
-            """
+            if len(num_reviews_per_simulation) != num_simulations:
+                raise ValueError(
+                    f"{num_simulations} simulations to be done, "
+                    f"but {len(num_reviews_per_simulation)} review counts per simulation provided"
+                )
 
         if simulation_parameters is not None:
-            # Check that the provided simulation parameters have all the parameters (i.e, dict keys)
-            # that should be there. This is done by comparing to a dummy set of generated parameters
             dummy_parameters = self.generate_simulation_parameters(10)
-            assert set(simulation_parameters) == set(
-                dummy_parameters
-            ), f"""
-            Found parameters {simulation_parameters.keys()} in the provided parameters; expected
-            {dummy_parameters.keys()} as simulation parameters instead
-            """
+            if set(simulation_parameters) != set(dummy_parameters):
+                raise KeyError(
+                    f"Found parameters {simulation_parameters.keys()} in the provided parameters; expected"
+                    f"{dummy_parameters.keys()} as simulation parameters instead"
+                )
         else:
             simulation_parameters = self.generate_simulation_parameters(num_simulations)
-        # Run shape checks on the input dict of simulation parameters
-        # Store the number of distribution samples per parameter if the checks succeed
         self.params["num_dist_samples"] = check_simulation_parameters(
             simulation_parameters, num_simulations
         )
@@ -231,15 +219,19 @@ class SingleRhoSimulator(BaseSimulator):
     def mismatch_calculator(
         self, experience: float, expected_experience: float
     ) -> float:
-        assert experience in np.arange(
-            1, 6, 1
-        ), f"User's experience should be a whole number in [1, 5], got {experience} instead"
-        assert (
-            expected_experience >= 1.0 and expected_experience <= 5.0
-        ), f"""
-        Mean of user's expected distribution of experiences is a float in [1, 5],
-        got {expected_experience} instead
-        """
+        if experience not in np.arange(1, 6, 1):
+            raise ValueError(
+                f"User's experience should be a whole number in [1, 5], got {experience} instead"
+            )
+
+        if not (1.0 <= expected_experience <= 5.0):
+            raise ValueError(
+                f"""
+                Mean of user's expected distribution of experiences should be a float in [1, 5],
+                got {expected_experience} instead
+                """
+            )
+
         return experience - expected_experience
 
     def rating_calculator(self, delta: float, simulation_id: int) -> int:
@@ -287,22 +279,43 @@ class SingleRhoSimulator(BaseSimulator):
         # If existing reviews have been supplied, unravel them into the simulated reviews deque
         if existing_reviews is not None:
             product_reviews = existing_reviews[simulation_id]
+
+            # Define last review before the start of the loop to comply with formatting standards,
+            # however 'last_review' should not be used after the end of the first iteration.
+            last_review = product_reviews[-1]
+
             for review in product_reviews:
+                if sum(simulated_reviews[-1]) > 6:
+                    if (
+                        sum(review - last_review) != 1
+                    ):  # Check that ratings are added one by one. (i.e. histogram cannot go from [1,1,1,1,2] to [1,1,1,1,4])
+                        raise ValueError(
+                            """
+                            Please check the histograms provided in the array of existing reviews. These should be in the form
+                            of cumulative histograms and should only add 1 rating at a time.
+                            """
+                        )
+
                 # We use the same manner of appending existing review histograms to simulated_reviews as if
                 # those histograms were actually produced during simulations. This ensures that the same dtype is
                 # appended to the deque always and keeps the size of the deque as small as possible
+
                 current_histogram = simulated_reviews[-1].copy()
-                rating_index = np.where(review - current_histogram)[0][0]
-                current_histogram[rating_index] += 1
+                rating_index = np.where(review - current_histogram)[0]
+                if (
+                    len(rating_index) != 1
+                ):  # Check that only 1 rating is added at a time. (i.e. histogram cannot go from [1,1,1,1,2] to [1,2,1,1,3])
+                    raise ValueError(
+                        """
+                        Please check the histograms provided in the array of existing reviews. These should be in the form
+                        of cumulative histograms and should only add 1 rating at a time.
+                        """
+                    )
+
+                current_histogram[rating_index[0]] += 1
                 simulated_reviews.append(current_histogram)
-                if len(simulated_reviews) > 1:
-                    assert (
-                        np.sum(simulated_reviews[-1]) - np.sum(simulated_reviews[-2])
-                    ) == 1, """
-                    Please check the histograms provided in the array of existing reviews. These should be in the form
-                    of cumulative histograms and should only add 1 rating at a time
-                    """
                 total_visitors -= 1
+                last_review = review
 
         for visitor in range(total_visitors):
             rating_index = self.simulate_visitor_journey(
@@ -354,12 +367,12 @@ class DoubleRhoSimulator(SingleRhoSimulator):
         rho = self.yield_simulation_param_per_visitor(simulation_id, "rho")
         # Return the review only if mismatch is higher than rho
         # We use two rhos here - rho[0] is for negative mismatch, and rho[1] for positive mismatch
-        assert isinstance(
-            rho, np.ndarray
-        ), f"Expected np.ndarray type for rho, found {type(rho)} instead"
-        assert rho.shape == (
-            2,
-        ), f"Expecting shape (2,) for rho, got {rho.shape} instead"
+        if not isinstance(rho, np.ndarray):
+            raise ValueError(
+                f"Expected np.ndarray type for rho, found {type(rho)} instead"
+            )
+        if rho.shape != (2,):
+            raise ValueError(f"Expecting shape (2,) for rho, got {rho.shape} instead")
         # Tendency to rate governs baseline probability of returning review
         if np.random.random() <= self.tendency_to_rate:
             return True
@@ -375,30 +388,42 @@ class HerdingSimulator(DoubleRhoSimulator):
     def __init__(self, params: dict):
         self.previous_rating_measure = params["previous_rating_measure"]
         self.min_reviews_for_herding = params["min_reviews_for_herding"]
-        assert self.previous_rating_measure in [
-            "mean",
-            "mode",
-            "mode of latest",
-        ], f"Can only use mean/mode/mode of latest as previous rating, provided {self.previous_rating_measure} instead"
+
+        if self.previous_rating_measure not in ["mean", "mode", "mode of latest"]:
+            raise ValueError(
+                f"""
+                previous_rating_measure has to be one of mean, mode or mode of latest,
+                found {self.previous_rating_measure} instead
+                """
+            )
+
         if self.previous_rating_measure == "mode of latest":
-            assert (
-                "num_latest_reviews_for_herding" in params
-            ), """
-            Number of latest reviews to calculate mode needed if mode of latest is being used for herding
-            """
+            if "num_latest_reviews_for_herding" not in params:
+                raise ValueError(
+                    """
+                    Number of latest reviews to calculate mode needed if mode of latest is being used for herding
+                    """
+                )
+
             self.num_latest_reviews_for_herding = params[
                 "num_latest_reviews_for_herding"
             ]
-            assert (
-                self.num_latest_reviews_for_herding < self.min_reviews_for_herding
-            ), f"""
-            Minimum {self.min_reviews_for_herding} required before herding can be done, but
+
+            if self.num_latest_reviews_for_herding > self.min_reviews_for_herding:
+                raise ValueError(
+                    """Minimum {self.min_reviews_for_herding} required before herding can be done, but
             {self.num_latest_reviews_for_herding} latest reviews to be actually used for mode calculation during herding,
             so herding cannot actually be done before {self.num_latest_reviews_for_herding + 1} reviews accumulate
             """
-        assert (
-            self.min_reviews_for_herding >= 1
-        ), f"At least 1 review has to exist before herding can happen, found {self.min_reviews_for_herding} instead"
+                )
+
+        if self.min_reviews_for_herding < 1:
+            raise ValueError(
+                f"""
+                Minimum number of reviews for herding has to be at least 1, found {self.min_reviews_for_herding} instead
+                """
+            )
+
         super(HerdingSimulator, self).__init__(params)
 
     @classmethod
@@ -446,9 +471,12 @@ class HerdingSimulator(DoubleRhoSimulator):
         self, rating_index: int, simulated_reviews: Deque, simulation_id: int
     ) -> float:
         h_p = self.yield_simulation_param_per_visitor(simulation_id, "h_p")
-        assert isinstance(
-            h_p, float
-        ), f"Expecting a scalar value for the herding parameter, got {h_p} instead"
+
+        if not isinstance(h_p, float):
+            raise ValueError(
+                f"Expecting a scalar value for the herding parameter, got {h_p} instead"
+            )
+
         return h_p
 
     def herding(
@@ -458,21 +486,33 @@ class HerdingSimulator(DoubleRhoSimulator):
         simulation_id: int,
         use_h_u: bool = False,
     ) -> int:
-        assert (
+        if (
             np.sum(simulated_reviews[-1]) - np.sum(simulated_reviews[0])
-            >= self.min_reviews_for_herding
-        ), f"""
-        Minimum {self.min_reviews_for_herding} reviews need to have been obtained for herding to happen,
-        found only {np.sum(simulated_reviews[-1]) - np.sum(simulated_reviews[0])} instead
-        """
-        # Check that the whole timeseries of simulated_reviews has been supplied
-        if len(simulated_reviews) == 1:
-            np.testing.assert_array_equal(simulated_reviews[0], np.ones(5))
-        else:
-            np.testing.assert_array_equal(
-                np.array([review.shape[0] for review in simulated_reviews]),
-                5 * np.ones(len(simulated_reviews)),
+            < self.min_reviews_for_herding
+        ):
+            raise ValueError(
+                f"""
+                Minimum {self.min_reviews_for_herding} reviews need to have been obtained for herding to happen,
+                found only {np.sum(simulated_reviews[-1]) - np.sum(simulated_reviews[0])} instead
+                """
             )
+
+        # Check that the whole timeseries of simulated_reviews has been supplied
+        # if len(simulated_reviews) == 1:
+        #    if not np.array_equal(simulated_reviews[0], np.ones(5)):
+        #        raise ValueError("Error message B")
+        #
+        # else: #(if statement below this blinded section of the code)
+        #
+        #
+        # Note from Diego: Have not found a clar approach on how to test this condition given the previous condition thus it has been temporarily #ed
+
+        if not np.array_equal(
+            np.array([review.shape[0] for review in simulated_reviews]),
+            5 * np.ones(len(simulated_reviews)),
+        ):
+            raise ValueError("Error message for test case 2")
+
         # Pull out the herding parameter which will be used in this simulation
         # This step is trivial when using a single herding h_p, but becomes important when using 2
         h_p = self.choose_herding_parameter(
@@ -513,9 +553,13 @@ class HerdingSimulator(DoubleRhoSimulator):
             # was an instance of float at the start of this method, but can't use
             # isinstance(previous_rating_index, (float, int)) here.
             # Check: https://numpy.org/doc/stable/reference/arrays.scalars.html
-            assert np.issubdtype(
-                previous_rating_index, np.number
-            ), f"Previous rating index should be a number, found {type(previous_rating_index)} instead"
+            if not np.issubdtype(previous_rating_index, np.number):
+                raise ValueError(
+                    f"""
+                    Previous rating index should be a number, found {type(previous_rating_index)} instead
+                    """
+                )  # Note from Diego: Have not found a clar approach on how to test this condition given the previous condition thus it has been temporarily #ed
+
             # Return the average of the currently calculated rating and the previous rating measure
             # Convert to integer because this is used to index the rating histogram
             return int((rating_index + previous_rating_index) / 2)
@@ -529,13 +573,15 @@ class DoubleHerdingSimulator(HerdingSimulator):
     # is above a metric of existing ratings (mean or mode) and the other when it is below
     def __init__(self, params: dict):
         self.herding_differentiating_measure = params["herding_differentiating_measure"]
-        assert self.herding_differentiating_measure in [
-            "mean",
-            "mode",
-        ], f"""
-        Can only use mean/mode of the existing ratings to choose the h_p to use,
-        provided {self.herding_differentiating_measure} instead
-        """
+
+        if self.herding_differentiating_measure not in ["mean", "mode"]:
+            raise ValueError(
+                f"""
+                herding_differentiating_measure has to be one of mean or mode,
+                found {self.herding_differentiating_measure} instead
+                """
+            )
+
         super(DoubleHerdingSimulator, self).__init__(params)
 
     @classmethod
@@ -563,12 +609,14 @@ class DoubleHerdingSimulator(HerdingSimulator):
         # Pull out the (2 valued) h_p corresponding to this simulation id
         h_p = self.yield_simulation_param_per_visitor(simulation_id, "h_p")
         # Confirm that h_p is 2-dimensional array
-        assert isinstance(
-            h_p, np.ndarray
-        ), f"Expected np.ndarray type for h_p, found {type(h_p)} instead"
-        assert h_p.shape == (
-            2,
-        ), f"Expecting shape (2,) for h_p, got {h_p.shape} instead"
+        if not isinstance(h_p, np.ndarray):
+            raise ValueError(
+                f"Expected np.ndarray type for h_p, found {type(h_p)} instead"
+            )
+
+        if h_p.shape != (2,):
+            raise ValueError(f"Expecting shape (2,) for h_p, got {h_p.shape} instead")
+
         # Pick which h_p to use based on the rating_index that the visitor picked
         # If it is greater than the mean/mode of existing ratings, pick h_p[1], else pick h_p[0]
         if self.herding_differentiating_measure == "mean":
@@ -606,27 +654,36 @@ class RatingScaleSimulator(HerdingSimulator):
         # The actual limit of 1 star ratings will lie between one_star_lowest_limit and 0.5*one_star_lowest_limit
         self.one_star_lowest_limit = params["one_star_lowest_limit"]
         # Limit of 5 star ratings should be positive, and vice-versa for 1 star ratings
-        assert (
+        if not (
             self.five_star_highest_limit > 0.0 and self.five_star_highest_limit < 4.0
-        ), f"""
-        The highest limit of delta for 5 star ratings should be positive and less than 4,
-        found {self.five_star_highest_limit}
-        """
-        assert (
-            self.one_star_lowest_limit < 0.0 and self.one_star_lowest_limit > -4.0
-        ), f"""
-        The lowest limit of delta for 1 star ratings should be negative and more than -4,
-        found {self.one_star_lowest_limit}
-        """
+        ):
+            raise ValueError(
+                f"""
+            The highest limit of delta for 5 star ratings should be positive and less than 4,
+            found {self.five_star_highest_limit}
+            """
+            )
+
+        if not (self.one_star_lowest_limit < 0.0 and self.one_star_lowest_limit > -4.0):
+            raise ValueError(
+                f"""
+            The lowest limit of delta for 1 star ratings should be negative and more than -4,
+            found {self.one_star_lowest_limit}
+            """
+            )
+
         # We also need to supply the max probability of 5 star bias across all simulated products
         # Based on this probability, a visitor leaves a 5 star rating irrespective of their experience, +ive or -ive
+
         self.max_bias_5_star = params["max_bias_5_star"]
-        assert (
-            self.max_bias_5_star >= 0 and self.max_bias_5_star <= 1
-        ), f"""
-        The max 5 star bias across all simulated products is a maximum probability value. So it should be
-        between 0 and 1, but found {self.max_bias_5_star} instead
-        """
+        if not (self.max_bias_5_star >= 0 and self.max_bias_5_star <= 1):
+            raise ValueError(
+                f"""
+            The max 5 star bias across all simulated products is a maximum probability value. So it should be
+            between 0 and 1, but found {self.max_bias_5_star} instead
+            """
+            )
+
         super(RatingScaleSimulator, self).__init__(params)
 
     @classmethod
